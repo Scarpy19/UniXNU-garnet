@@ -33,6 +33,8 @@ The Android community [BoardConfig.mk](https://github.com/xiaomi-sm7435/android_
 
 UniXNU's [device-tree guide](https://github.com/UniXNU/UniXNU/blob/a74949b0d2fbfeb6936f9baee4e8e974c36c35fb/docs/porting/device-tree.md) distinguishes the board hardware tree used to generate the XNU ADT from the firmware DTB embedded in the boot image. They must not be treated as interchangeable. Confirm the exact DTB source and memory ranges for the actual device before generating either artifact.
 
+The HakiOS reference at commit `ff80ac362505fca36600f084fd066f3e47028f93` includes `prebuilt/device-tree.dtb`, SHA-256 `66094d6eb28841efc765816b09b8db0d819502e04c7def57066278a4ae184848`. Its root model names garnet and its compatible strings include `qcom,parrot-qrd` and `qcom,parrot`. Debian `dtc -I dtb -O dts -o /dev/null` returned successfully but reported numerous binding and `reg` warnings. `fdtget` showed multiple `/memory` entries including zero-size values. A root-child listing returned exit code 1 after partial output. These observations concern an unlicensed, externally supplied prebuilt, not the connected device's live tree. They do not establish a safe boot DTB or usable RAM map; do not redistribute or use it without provenance, binding and target validation.
+
 ## UEFI integration evidence
 
 [Project-Silicium PR 2166](https://github.com/Project-Silicium/Mu-Silicium/pull/2166) was merged as `7a2ada19841a129f86fb791c0b9a710436c849a4`; it changes garnet memory-map entries to address a reported Linux boot exception. This is not evidence of an XNU boot. The public [garnet fork](https://github.com/garnet-linux/Mu-Silicium/tree/f8779ea0bfb33e2aec31da4a902b4a4eb8abd044) has a later revision with a different memory map, so the precise revision matters.
