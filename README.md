@@ -123,6 +123,67 @@ python3 scripts/check-xnu-series.py ../UniXNU
 - Treat `fastboot boot` as a hardware operation requiring prior authorization.
 - The `example = true` guard prevents accidental builds.
 
+## Acknowledgements
+
+This port builds on the work of many projects and individuals. Their
+contributions are gratefully acknowledged:
+
+### Core framework
+
+- **UniXNU** — Build driver, OS profiles, component catalog, and documentation.
+  https://github.com/UniXNU/UniXNU
+- **UniXNU-sheng** — Device repository template and reference implementation.
+  https://github.com/UniXNU/UniXNU-sheng
+- **UniXNU-sm7435-common** — Shared Qualcomm SM7435 platform support.
+  https://github.com/vildangil/UniXNU-sm7435-common
+
+### Functional reference (HakiOS)
+
+- **JosephMontfort** — HakiOS XNU kernel for garnet, device configuration, UEFI platform,
+  and functional boot reference.
+  https://github.com/JosephMontfort/hakios-xnu-kernel-garnet
+  https://github.com/JosephMontfort/hakios-sm7435
+- **oosexgang** — HakiOS common kernel, UEFI, and Metal implementation.
+  https://github.com/oosexgang/hakios-xnu-kernel
+  https://github.com/oosexgang/hakios-uefi
+  https://github.com/oosexgang/hakios-metal
+
+### UEFI firmware
+
+- **Project-Silicium** — Mu-Silicium UEFI firmware with garnet support.
+  https://github.com/Project-Silicium/Mu-Silicium
+- **garnet-linux** — Garnet-specific UEFI patches.
+  https://github.com/garnet-linux/Mu-Silicium
+
+### Android device references
+
+- **xiaomi-sm7435** — Android device tree, kernel, and vendor blobs for garnet.
+  https://github.com/xiaomi-sm7435/android_device_xiaomi_garnet
+  https://github.com/xiaomi-sm7435/android_device_xiaomi_garnet-kernel
+  https://github.com/xiaomi-sm7435/android_vendor_xiaomi_garnet
+
+### Hardware vendors
+
+- **Qualcomm** — Snapdragon 7s Gen 2 (SM7435-AB) SoC, Adreno 710 GPU
+- **Xiaomi** — Redmi Note 13 Pro 5G / POCO X6 5G hardware
+- **FocalTech** — FT3683G touchscreen controller
+- **Awinic** — AW88261 audio amplifiers
+
+### Open source projects
+
+- **Apple** — XNU kernel (APSL 2.0)
+- **LLVM/Clang** — Compiler toolchain
+- **Mesa** — Freedreno GPU driver
+- **Project Mu** — UEFI firmware framework
+
+### Individual contributors
+
+- Gustave Monce — ButtonsDxe patch for power button usability
+- Kancy Joe — UFS sleep/wakeup patch
+- N1kroks — USB mass storage removable state patch
+- ximiyad123 — OS booting fixes for garnet in Mu-Silicium
+- iNUCi — Initial garnet support in Mu-Silicium
+
 ## License
 
 This repository contains only original configuration and documentation.
