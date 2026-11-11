@@ -1,0 +1,6 @@
+# Research-only OS patch order. The upstream boot-progress patch requires
+# unrelated board context and is intentionally omitted; restore equivalent
+# diagnostics only after a garnet-specific implementation is verified.
+arch:../../../patches/xnu-12377/darwin26-syscalls.patch
+arch:../../../patches/xnu-12377/darwin26-kpi.patch
+arch:../../../patches/xnu-12377/darwin26-shared-region.patch

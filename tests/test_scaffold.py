@@ -18,6 +18,7 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(self.board["board"]["name"], "garnet")
         self.assertIn("cpus=1", self.board["payload"]["kernel_args"])
         self.assertNotIn("soc:patches/xnu/series", self.board["kernel"]["patch_series"])
+        self.assertIn("device:patches/xnu/os27.series", self.board["kernel"]["patch_series"])
 
     def test_soc_feed_is_immutable_and_matches_board(self):
         sources = self.feeds["source"]
@@ -41,6 +42,7 @@ class ScaffoldTests(unittest.TestCase):
         self.assertTrue(source.startswith("device:"))
         self.assertTrue((ROOT / source.removeprefix("device:")).is_file())
         self.assertTrue((ROOT / "patches/xnu/series").is_file())
+        self.assertTrue((ROOT / "patches/xnu/os27.series").is_file())
 
     def test_uefi_patch_uses_inherited_platform_dependencies(self):
         patch = (ROOT / "patches/uefi/0001-garnet-unixnu-handoff.patch").read_text(encoding="utf-8")
