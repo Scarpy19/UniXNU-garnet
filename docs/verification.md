@@ -95,7 +95,7 @@ payload, and 3 MiB UEFI volume:
 
 * `/home/scarpy/UniXNU/garnet-boot-hakios-dtb.img`
 * 203,194,368 bytes
-* SHA-256: `pending independent verification`
+* SHA-256: `56c9fa7340a9170135f001e6c28d72db6834d294c4570d985219577027d8016e`
 
 The boot-image board configuration now names the external DTB as
 `build/garnet/hakios-garnet.dtb`. The simplified UniXNU DTS remains the ADT
