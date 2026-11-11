@@ -10,7 +10,7 @@ import tempfile
 
 
 DEVICE = Path(__file__).resolve().parents[1]
-EXPECTED_XNU = "ac9718fb1af618d5ce8678d0dc6e8a58f252216f"
+EXPECTED_XNU = "d8b80295118ef25ac3a784134bcf95cd8e88109f"
 
 
 def run(args, **kwargs):

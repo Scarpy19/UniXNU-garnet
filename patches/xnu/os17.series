@@ -1,0 +1,4 @@
+# Research-only iPadOS 17 prelink patches. The upstream boot-progress patch
+# is omitted pending verification of its board-specific prerequisites.
+component:XnuPrelink/patches/xnu-10063.141.1-security-init.patch
+component:XnuPrelink/patches/xnu-10063.141.1-sparse-index.patch

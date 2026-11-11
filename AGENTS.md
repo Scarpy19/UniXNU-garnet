@@ -13,3 +13,4 @@ Read this file, `README.md`, `docs/evidence.md`, and `docs/verification.md` befo
 - Do not install software outside the project workspace, change host system paths, or access the phone without the user's explicit approval.
 - Treat `fastboot boot` as a hardware operation requiring prior user approval; do not flash partitions without separate explicit authorization.
 - Keep UniXNU, SoC, firmware, and device revisions pinned and record the provenance of every borrowed fact or implementation.
+- Perform all compilation from synchronized checkouts in the native WSL filesystem under `/home/scarpy/UniXNU`; preserve uncommitted changes when synchronizing.

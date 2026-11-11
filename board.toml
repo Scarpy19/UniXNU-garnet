@@ -6,8 +6,8 @@ example = true
 name = "garnet"
 soc = "SM7435"
 soc_source = "sm7435"
-# Research target only: PAC and arm64e support are not verified on garnet.
-os_profile = "ipados-27.0.1-24A446"
+# Research target only; neither the kernel nor iOS boot is verified on garnet.
+os_profile = "ipados-17.7.11-21H461"
 description = "Preliminary garnet bring-up; not bootable"
 kit = "garnet"
 
@@ -19,7 +19,7 @@ defconfig = "garnet_defconfig"
 config_fragments = ["arch:configs/common.config", "soc:configs/sm7435.config", "os:configs/ipados.config"]
 # The SM7435 SMP series targets a different XNU baseline and does not apply
 # to this profile. Single-CPU bring-up must not imply SMP support.
-patch_series = ["arch:patches/xnu/series", "device:patches/xnu/os27.series", "device:patches/xnu/series"]
+patch_series = ["arch:patches/xnu/series", "device:patches/xnu/os17.series", "device:patches/xnu/series"]
 
 [device_tree]
 source = "device:dts/garnet.dts"

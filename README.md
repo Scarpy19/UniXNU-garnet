@@ -7,9 +7,9 @@ image or a verified device configuration.
 ## Status
 
 - `board.example = true` — the configuration is guarded and cannot produce a boot image.
-- OS profile is a research target (`ipados-27.0.1-24A446`), not an arm64e compatibility claim.
+- OS profile is a research target (`ipados-17.7.11-21H461`); iOS boot is not verified.
 - No kernel, UEFI firmware, or boot image has been compiled.
-- 72 XNU patches apply cleanly to a disposable clone of the pinned source.
+- The earlier 72-patch check applied to the previous iPadOS 27 profile, not this profile.
 - UEFI integration patch applies textually but has not been compiled or booted.
 
 ## Directory structure
@@ -30,7 +30,7 @@ UniXNU-garnet/
 │   ├── uefi/
 │   │   └── 0001-garnet-unixnu-handoff.patch
 │   └── xnu/
-│       ├── os27.series    # Provisional OS patch series
+│       ├── os17.series    # Provisional iPadOS 17 patch series
 │       └── series         # Empty (placeholder)
 ├── scripts/
 │   ├── check-uefi-patch.py

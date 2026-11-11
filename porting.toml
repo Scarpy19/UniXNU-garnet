@@ -3,7 +3,7 @@ schema_version = 1
 [device]
 name = "garnet"
 soc = "SM7435"
-os_profile = "ipados-27.0.1-24A446"
+os_profile = "ipados-17.7.11-21H461"
 summary = "Preliminary research scaffold; no verified build or device boot."
 
 [[area]]
@@ -12,7 +12,7 @@ status = "planned"
 components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
 paths = ["board.toml", "feeds.toml", "unixnu.lock", "configs/**", "patches/xnu/**", ".gitignore", "docs/linux-host.md"]
 inputs = ["Pinned UniXNU and preliminary SM7435 sources; target OS profile."]
-configuration = ["Example guard remains enabled; profile 27 is unverified."]
+configuration = ["Example guard remains enabled; the iPadOS 17 profile and device integration are unverified."]
 procedure = ["Resolve sources and inspect configuration after required inputs are established."]
 findings = ["The SoC feed is pinned; ARM64e compatibility is not established.", "WSL defconfig and status resolve garnet and its SM7435 feed. Empty kernel.archives selects automatic component recipes, while auxiliary archives and several components' research-profile ABI support need review.", "The guarded board selects a provisional OS patch series without the incompatible boot-progress layer; equivalent diagnostics and profile compatibility are unverified.", "The guarded board file describes candidate UEFI package roots and submodules, not a verified build configuration.", "The user authorized system packages and administrator access for compilation; the WSL host check reports llvm-config missing. The official installer was started as WSL root; completion is pending."]
 completion = ["Configuration and all selected component dependencies resolve with reviewed inputs."]
@@ -42,7 +42,7 @@ paths = ["dts/**", "configs/**"]
 inputs = ["SM7435 CPU topology, PSCI, interrupt controller, timer, and PAC."]
 configuration = ["The preliminary boot arguments request one CPU."]
 procedure = ["Verify boot CPU and PAC, then record timer and secondary CPU checkpoints."]
-findings = ["The shared SMP patch does not apply to the selected XNU 27 profile after its architecture changes; the provisional board omits that series and keeps cpus=1.", "Android on the connected target reported eight processors and did not advertise paca or pacg in its CPU feature list; this does not establish EL1 behavior under UEFI."]
+findings = ["The shared SMP patch was incompatible with the earlier XNU 27 profile; its applicability to XNU 17 is unverified. The provisional board omits that series and keeps cpus=1.", "Android on the connected target reported eight processors and did not advertise paca or pacg in its CPU feature list; this does not establish EL1 behavior under UEFI."]
 completion = ["Each enabled CPU, timer, and interprocessor interrupt works on the target."]
 limits = ["No CPU or PAC behavior has been observed on the target."]
 next_action = ["Collect target CPU feature and boot CPU evidence."]
