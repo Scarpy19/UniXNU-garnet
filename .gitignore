@@ -1,0 +1,12 @@
+local.toml
+unixnu.local.toml
+.cache/
+out/
+build/
+*.img
+*.ipsw
+*.dtb
+*.fd
+*.efi
+*.apfs
+*.log
