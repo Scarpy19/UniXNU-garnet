@@ -126,6 +126,27 @@ python3 scripts/check-garnet.py
 # minimum sizes, ELF/MBN magic bytes
 ```
 
+## Functional UEFI reference (JosephMontfort/hakios-sm7435)
+
+The JosephMontfort/hakios-sm7435 repository contains a **functional UEFI firmware**
+for garnet (`prebuilt/SILICIUM_UEFI.fd`). The project user confirms this UEFI
+boots successfully on garnet. It provides display, touch, CPU/SMP, UFS, and USB.
+
+Validated memory map (from MemoryMapLib.c):
+- UEFI FD: 0xA7100000, size: 0x00300000
+- Kernel load: 0xA8000000
+- XNU payload: 0xF4000000, size: 0x04000000
+- DXE heap: 0xF8000000, size: 0x07C00000
+
+Boot configuration (from garnet.toml):
+- Boot image header version: 4
+- Kernel compression: gzip
+- Append DTB: true
+- Boot shim payload base: 0xA8000000
+
+These values are validated by actual device boot and can serve as reference
+for the UniXNU port, but must be independently verified before use.
+
 ## Device template reference
 
 Reference template: https://github.com/zhangp996/unixnu-in2020-16k-full
