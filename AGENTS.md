@@ -5,6 +5,7 @@ Read this file, `README.md`, `docs/evidence.md`, and `docs/verification.md` befo
 ## Rules
 
 - Document findings, source revisions, commands, limitations, and failures in English. Separate source claims from independently verified results.
+- Keep this repository and future repositories for this port focused on garnet; do not include unrelated device support or documentation.
 - Never guess hardware addresses, memory reservations, firmware inputs, ABI compatibility, or device support. Confirm values from the actual board and independent sources.
 - Follow the upstream format-2 device repository and porting-record requirements. Keep the port explicitly incomplete until its inputs and validation are complete.
 - Do not copy code or distribute binaries from a repository without checking the license and file provenance. A public repository is not by itself a redistribution license.

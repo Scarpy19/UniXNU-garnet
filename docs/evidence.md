@@ -9,7 +9,6 @@ The target is `garnet`, Qualcomm SM7435-AB. A source statement is an upstream cl
 | Project | Revision observed | Purpose |
 | --- | --- | --- |
 | [UniXNU](https://github.com/UniXNU/UniXNU) | `a74949b0d2fbfeb6936f9baee4e8e974c36c35fb` | Build driver and porting documentation. Its `AGENTS.md` points to `docs/`. |
-| [UniXNU-sheng](https://github.com/UniXNU/UniXNU-sheng) | `0c865163139971264ea611fe4b4ab1e6c151b9e9` | Example format-2 device port; SM8550 settings are not garnet settings. |
 | [hakios-sm7435](https://github.com/JosephMontfort/hakios-sm7435) | `ff80ac362505fca36600f084fd066f3e47028f93` | Garnet hardware and implementation reference. No root license was found; do not assume permission to copy its files. |
 | [Android device tree](https://github.com/xiaomi-sm7435/android_device_xiaomi_garnet) | `5b7d0823c81ca7dcbbc8889615772e004957114a` | Android board configuration and hardware reference. |
 
@@ -21,7 +20,7 @@ The HakiOS common repository describes a mixture of APSL-2.0 and MIT licensing b
 
 ## OS profile constraint
 
-The [UniXNU arm64e guide](https://github.com/UniXNU/UniXNU/blob/a74949b0d2fbfeb6936f9baee4e8e974c36c35fb/docs/porting/arm64e.md) requires usable native pointer authentication on every enabled CPU for iOS/iPadOS 27 and lists only sheng as supported. Garnet support and EL1/EL0 behavior are not established. Do not claim that `--os 27` works. The guide identifies iPadOS 17 as an arm64 alternative, but choosing a fallback requires an explicit project decision.
+The [UniXNU arm64e guide](https://github.com/UniXNU/UniXNU/blob/a74949b0d2fbfeb6936f9baee4e8e974c36c35fb/docs/porting/arm64e.md) requires usable native pointer authentication on every enabled CPU for iOS/iPadOS 27 and does not list garnet as supported. Garnet support and EL1/EL0 behavior are not established. Do not claim that `--os 27` works. The guide identifies iPadOS 17 as an arm64 alternative, but choosing a fallback requires an explicit project decision.
 
 ## Device-tree and boot-image observations
 
