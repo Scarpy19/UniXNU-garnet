@@ -122,3 +122,28 @@ fastboot-to-UEFI handoff and a working UniXNU menu presentation. It does not
 yet confirm XNU entry or peripheral operation. The test log is retained locally under
 `logs/device-test/second-fastboot-boot.txt` and
 `logs/device-test/second-post-30s.txt`; device identifiers are not committed.
+
+## Repeat menu boot with complete host capture
+
+The same image was booted again after the device was manually returned to
+fastboot. The preflight hash and size matched the values above. Read-only
+`fastboot getvar all` confirmed `product: garnet`, `kernel: uefi`,
+`unlocked: yes`, `secure: yes`, `max-download-size: 0x30000000`, and
+`current-slot: a`. The command output also contained the device serial number,
+which is intentionally excluded from this record.
+
+The second transfer completed as follows:
+
+```text
+Sending 'boot.img' (198432 KB) OKAY [ 4.289s ]
+Booting OKAY [ 0.261s ]
+Finished. Total time: 4.627s
+```
+
+The host captured USB state at 5, 15, 30, and 60 seconds. A fastboot transport
+was briefly reported at 5 seconds and then disappeared; ADB never appeared.
+The user observed the UniXNU menu on the display during this boot. Therefore
+the display/menu checkpoint is confirmed again, while XNU entry and runtime
+logs remain unconfirmed. Complete local logs are under
+`logs/device-test/repeat-menu/` and are not committed because they contain
+device identifiers.
