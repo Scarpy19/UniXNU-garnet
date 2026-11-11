@@ -184,6 +184,28 @@ contributions are gratefully acknowledged:
 - ximiyad123 — OS booting fixes for garnet in Mu-Silicium
 - iNUCi — Initial garnet support in Mu-Silicium
 
+### Additional Android references
+
+- **Garnet-project-sm7435** — Android device and vendor trees for garnet.
+  https://github.com/Garnet-project-sm7435/device_xiaomi_garnet
+  https://github.com/Garnet-project-sm7435/vendor_xiaomi_garnet
+- **PROJECT-A17** — Android kernel source for SM7435.
+  https://github.com/PROJECT-A17/kernel_xiaomi_sm7435
+- **garnet-stuff** — Pre-extracted firmware images for garnet.
+  https://github.com/garnet-stuff/vendor_xiaomi_garnet-firmware
+- **crdroidandroid** — Alternative Android device tree and DTBs.
+  https://github.com/crdroidandroid/android_device_xiaomi_garnet
+  https://github.com/crdroidandroid/android_kernel_xiaomi_garnet-devicetrees
+- **LineageOS** — SM7435 kernel modules.
+  https://github.com/LineageOS/android_kernel_xiaomi_sm7435-modules
+- **project-sm7435** — Alternative vendor tree.
+  https://github.com/project-sm7435/vendor_xiaomi_garnet
+
+### Device template reference
+
+- **zhangp996** — UniXNU device template reference.
+  https://github.com/zhangp996/unixnu-in2020-16k-full
+
 ## License
 
 This repository contains only original configuration and documentation.

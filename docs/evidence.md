@@ -57,7 +57,88 @@ The [Android kernel reference](https://github.com/xiaomi-sm7435/android_device_x
 
 The active GitHub CLI account was confirmed as `Scarpy19`. Debian on WSL2 is available and reports Python 3.13.5. The UniXNU Linux setup documentation says its normal installer writes toolchain content under `/opt` by default and shims under `/usr/bin`; it has not been run. The user requires work inside the project directory, so system-wide installation requires separate approval or a genuinely project-local solution.
 
-## Open questions
+## Additional Android and firmware references
+
+The following repositories provide supplementary device, kernel, and firmware
+information for garnet. They are listed in priority order per the porting guide.
+
+| # | Repository | URL | Revision observed | What to extract |
+|---|---|---|---|---|
+| 1 | Garnet-project-sm7435/device_xiaomi_garnet | https://github.com/Garnet-project-sm7435/device_xiaomi_garnet | not yet verified | `proprietary-files.txt`, `extract-files.py`, `BoardConfig.mk`, `device.mk`, `init/`, `sensors/`, `power/`, `udfps/` |
+| 2 | Garnet-project-sm7435/vendor_xiaomi_garnet | https://github.com/Garnet-project-sm7435/vendor_xiaomi_garnet | not yet verified | `proprietary/` (binaries), `garnet-vendor.mk`, `BoardConfigVendor.mk` |
+| 3 | PROJECT-A17/kernel_xiaomi_sm7435 | https://github.com/PROJECT-A17/kernel_xiaomi_sm7435 | not yet verified | Defconfig Android (reference for XNU defconfig), DTS source, CPU frequency tables |
+| 4 | garnet-stuff/vendor_xiaomi_garnet-firmware | https://github.com/garnet-stuff/vendor_xiaomi_garnet-firmware | not yet verified (archived 2025-05) | **Pre-extracted firmware** (OS1.0.6.0.UNRMIXM): partition images (tz, abl, dtbo, gpu, wifi, bt, modem) |
+| 5 | crdroidandroid/android_device_xiaomi_garnet | https://github.com/crdroidandroid/android_device_xiaomi_garnet | not yet verified | Updated `proprietary-files.txt`, `BoardConfig.mk`, `device.mk`, `AndroidProducts.mk` |
+| 6 | crdroidandroid/android_kernel_xiaomi_garnet-devicetrees | https://github.com/crdroidandroid/android_kernel_xiaomi_garnet-devicetrees | not yet verified | Compiled DTBs (binaries), complete memory map |
+| 7 | LineageOS/android_kernel_xiaomi_sm7435-modules | https://github.com/LineageOS/android_kernel_xiaomi_sm7435-modules | not yet verified | Kernel 5.10 module list, out-of-tree drivers |
+| 8 | project-sm7435/vendor_xiaomi_garnet | https://github.com/project-sm7435/vendor_xiaomi_garnet | not yet verified | Alternative vendor tree (40 commits), `proprietary/`, `garnet-vendor.mk` |
+
+### Priority of use
+
+- For DTS/defconfig: #3 (source) + #6 (compiled DTBs as cross-check)
+- For blobs: #4 (pre-extracted, fastest) → #1/#5 (extract-files.py if #4 is insufficient)
+- For modules/drivers: #7
+
+### Firmware extraction options
+
+**Option A — Pre-extracted blobs (fastest, no phone required):**
+```sh
+git clone https://github.com/garnet-stuff/vendor_xiaomi_garnet-firmware
+# Copy required partition images to paths in proprietary-files.txt
+```
+
+**Option B — Extract from device (complete, requires fastbootd):**
+```sh
+git clone https://github.com/JosephMontfort/hakios-sm7435
+cd hakios-sm7435
+./pull-firmware.sh   # Extracts tz, abl, dtbo, modem, gpu, wifi, bt, cpucp, tme
+./pull-soc.sh        # Extracts defconfig, DTS, SoC firmware
+```
+
+**Option C — extract-files.py from decompressed ROM:**
+```sh
+git clone https://github.com/Garnet-project-sm7435/device_xiaomi_garnet
+cd device_xiaomi_garnet
+python3 extract-files.py <path_to_decompressed_rom>
+# Generates proprietary/ with all blobs
+```
+
+### proprietary-files.txt format
+
+```
+# Format: <partition>:<path_on_phone>:<destination_in_repo>
+abl:abl_b:proprietary/abl.elf
+dtbo:dtbo:proprietary/dtbo.img
+tz:tz:proprietary/tz.mbn
+modem:modem:proprietary/non-HO/modem.zip
+gpu:gpu:proprietary/gpu.mbn
+wifi:wlan:proprietary/wlan_mac.bin
+bt:bt:proprietary/bt_vnd.fw
+cpucp:cpucp:proprietary/cpucp.elf
+tme:tme:proprietary/tme.mbn
+```
+
+### Preflight verification
+
+```sh
+python3 scripts/check-garnet.py
+# Verifies: presence of all blobs, SHA256 hashes,
+# minimum sizes, ELF/MBN magic bytes
+```
+
+## Device template reference
+
+Reference template: https://github.com/zhangp996/unixnu-in2020-16k-full
+
+The 7 steps to create `UniXNU-garnet` from the template:
+
+1. Copy the template directory to `UniXNU-garnet` and read `AGENTS.md` from the main repo.
+2. Configure `board.toml`: name, description, firmware paths, component selection. Add `UniXNURamDiskDxe` and filesystem dependencies to firmware DSC/FDF.
+3. Pin a reviewed commit of `UniXNU-sm7435-common` in `feeds.toml`.
+4. Rename and fill DTS/defconfig: `configs/example_defconfig` → `configs/garnet_defconfig`, `dts/board.dts` → `dts/garnet.dts`. Update `kernel.defconfig` and `device_tree.source` in board.toml. Fill DTS: model, compatible, memory map, CPU selection, peripherals.
+5. List firmware sources and hashes in `proprietary-files.txt`: partition, phone path, SHA256 (or "extract" if generated).
+6. Define partition geometry and payload inputs from device records (sizes, offsets, FAT layout of Android v4 boot image).
+7. Complete `porting.toml`: match identity with board.toml, cover each component with board-specific ownership paths, findings, evidence, completion criteria.
 
 - Verify exact SM7435 source revision, compatibility with the pinned UniXNU revision, and all SoC resource values against board evidence.
 - Establish garnet RAM variants, reserved regions, DTB provenance, boot image geometry, firmware inputs and safe log transport.

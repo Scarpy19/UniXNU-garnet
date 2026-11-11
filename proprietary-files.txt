@@ -1,0 +1,37 @@
+# proprietary-files.txt
+# Format: <partition>:<path_on_phone>:<destination_in_repo>
+# SHA256 hashes are recorded after extraction.
+# Lines starting with # are comments.
+
+# UEFI firmware (from pull-firmware.sh or pre-extracted images)
+# abl:abl_b:proprietary/abl.elf
+# tz:tz:proprietary/tz.mbn
+# dtbo:dtbo:proprietary/dtbo.img
+
+# GPU firmware (Adreno 710)
+# gpu:gpu:proprietary/gpu.mbn
+# gen71100_gmu:gen71100_gmu:proprietary/gen71100_gmu.bin
+# a702_sqe:a702_sqe:proprietary/a702_sqe.fw
+
+# Audio DSP
+# adsp:adsp:proprietary/adsp.mdt
+# adsp_b02:adsp_b02:proprietary/adsp.b02
+
+# Haptic
+# haptic:aw8697:proprietary/aw8697_haptic.bin
+
+# Modem
+# modem:modem:proprietary/modem.mdt
+# modem_b00:modem_b00:proprietary/modem.b00
+
+# Wi-Fi / Bluetooth
+# wlan:wlan:proprietary/wlan_mac.bin
+# bt:bt:proprietary/bt_vnd.fw
+
+# SoC / CPU
+# cpucp:cpucp:proprietary/cpucp.elf
+# tme:tme:proprietary/tme.mbn
+
+# Note: Extract from device using pull-firmware.sh or from
+# pre-extracted images (garnet-stuff/vendor_xiaomi_garnet-firmware).
+# Do NOT commit actual binaries to this repository.
