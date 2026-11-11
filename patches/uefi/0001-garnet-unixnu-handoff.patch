@@ -1,0 +1,32 @@
+diff --git a/Platforms/Xiaomi/garnetPkg/garnet.dsc b/Platforms/Xiaomi/garnetPkg/garnet.dsc
+--- a/Platforms/Xiaomi/garnetPkg/garnet.dsc
++++ b/Platforms/Xiaomi/garnetPkg/garnet.dsc
+@@ -65,4 +65,6 @@
+ [LibraryClasses]
++  HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
++  FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
+   #
+   # Memory Libraries
+   #
+@@ -79,4 +81,10 @@
+ [Components]
++  UniXNUPkg/Application/UniXNU/UniXNU.inf
++  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
++  UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
++  DarwinBootPkg/Driver/DarwinBoot.inf
++  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
++  FatPkg/EnhancedFatDxe/Fat.inf
+   #
+   # ACPI Tables
+   #
+diff --git a/Platforms/Xiaomi/garnetPkg/garnet.fdf b/Platforms/Xiaomi/garnetPkg/garnet.fdf
+--- a/Platforms/Xiaomi/garnetPkg/garnet.fdf
++++ b/Platforms/Xiaomi/garnetPkg/garnet.fdf
+@@ -86,2 +86,7 @@
++  INF UniXNUPkg/Application/UniXNU/UniXNU.inf
++  INF UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
++  INF UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
++  INF DarwinBootPkg/Driver/DarwinBoot.inf
++
+   # RAM Manager
+   INF SiliciumPkg/Drivers/RamManagerDxe/RamManagerDxe.inf

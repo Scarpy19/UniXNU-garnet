@@ -25,6 +25,8 @@ The [UniXNU arm64e guide](https://github.com/UniXNU/UniXNU/blob/a74949b0d2fbfeb6
 
 The preliminary `board.toml` names the requested 27 profile solely to structure the investigation. It remains marked as an example and must not be used to build or boot a device image until PAC, memory, firmware and the remaining inputs are verified. The SoC source describes its SMP patch as experimental and recommends single-CPU bring-up; `cpus=1` is a conservative target, not a validated boot configuration.
 
+With the user's permission, read-only ADB queries on the connected target running a custom Android ROM reported eight processors. The `/proc/cpuinfo` feature list did not advertise `paca` or `pacg`. These are observations from the running Android kernel, not a conclusive test of architectural PAC availability, per-core key access, or the UEFI/XNU execution environment. No device serial or user data was recorded.
+
 ## Device-tree and boot-image observations
 
 The Android community [BoardConfig.mk](https://github.com/xiaomi-sm7435/android_device_xiaomi_garnet/blob/5b7d0823c81ca7dcbbc8889615772e004957114a/BoardConfig.mk) declares `parrot`, Android boot header version 4, a 4096-byte kernel page size, and prebuilt DTBs from a separate kernel repository. These are Android build configuration values, not independently verified bootloader requirements or permission to write partitions. Its architecture tuning string is a compiler configuration and is not proof of the physical CPU model.
