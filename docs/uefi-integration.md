@@ -7,10 +7,12 @@ The patch adds the UniXNU menu, boot-option driver, initrd RAM-disk driver, and 
 The following only checks textual applicability against a checkout at the exact source revision:
 
 ```sh
-git -C ../uefi-garnet-reference apply --check ../UniXNU-garnet/patches/uefi/0001-garnet-unixnu-handoff.patch
+python3 scripts/check-uefi-patch.py ../uefi-garnet-reference
 ```
 
 This check passed locally. It does not apply the patch, resolve library conflicts, check transitive package dependencies, build firmware, or establish that the FD fits or boots. Before building, review inherited DSC definitions, source licenses, submodules, vendor-input provenance and hashes, log exporter dependencies, `PACKAGES_PATH`, the target memory map, and firmware DTB. The current board guard remains enabled. Do not replace it with an existing prebuilt FD or assume boot-image header compatibility.
+
+The checker accepts only the two reviewed UEFI commit IDs, rejects modifications to its listed platform files, and runs `git apply --check`. At the two reviewed revisions the garnet DSC/FDF, `Include/DXE.inc` and inherited `SiliciumPkg.dsc.inc` have matching Git blob IDs; other files, including the memory map and boot image configuration, differ. Only the garnet-linux checkout has been run through the checker locally. The JosephMontfort revision is identified from matching source blobs, not a local build or hardware test.
 
 Do not add this patch to `board.toml` as `[firmware] patches`: the pinned UniXNU `scripts/unixnu/firmware.py` applies that list to the separate EDK II checkout, not to the Mu-Silicium checkout whose files this patch targets. The firmware build consumes the selected Mu-Silicium DSC/FDF as they exist in the UEFI checkout. A reviewed, explicitly applied UEFI checkout or a future UEFI-specific integration mechanism is needed; neither exists yet.
 
