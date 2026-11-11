@@ -116,7 +116,9 @@ The second image was tested with the explicit user authorization to use
 * Total transfer time: 4.630 seconds
 
 After 30 seconds, neither `fastboot devices` nor `adb devices` listed the
-phone. No UEFI or XNU output was exposed over USB. This is a second failed
-handoff, not a boot success. The test log is retained locally under
+phone, which is expected while the firmware owns the display and USB loader.
+The user observed the UniXNU menu on the garnet display. This confirms the
+fastboot-to-UEFI handoff and a working UniXNU menu presentation. It does not
+yet confirm XNU entry or peripheral operation. The test log is retained locally under
 `logs/device-test/second-fastboot-boot.txt` and
 `logs/device-test/second-post-30s.txt`; device identifiers are not committed.
