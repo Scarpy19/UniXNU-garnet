@@ -46,3 +46,10 @@ tools = true
 # running `unixnu bootimg`; it is a local, non-repository input.
 [bootimg]
 dtb = "build/garnet/hakios-garnet.dtb"
+
+[[bootimg.dtb_node]]
+path = "/chosen"
+props = [
+  { name = "linux,initrd-start", type = "x", value = ["0x0", "0xA8000000"] },
+  { name = "linux,initrd-end", type = "x", value = ["0x0", "0xB4000000"] },
+]
