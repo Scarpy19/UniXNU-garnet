@@ -8,7 +8,7 @@ The end goal is an evidence-backed boot on the user's garnet device, not merely 
 4. **Hardware safety:** Before any device operation, explain the exact command, image provenance, recovery path and risks and obtain user approval. Never flash partitions without separate authorization. Confirm transport and log capture first.
 5. **Hardware milestones:** Record UEFI output, loader handoff, XNU entry, SMP, storage, display, input, GPU, audio and battery separately. Distinguish device observations from upstream claims. Test on the relevant RAM variants before claiming both work.
 
-An experimental kernel host build is recorded below. No garnet UEFI build, device boot or peripheral success has been verified.
+Experimental kernel, UEFI, and payload host builds are recorded below. No boot image, device boot, or peripheral success has been verified.
 
 ## Initial scaffold checks
 
@@ -47,3 +47,15 @@ These artifacts are host-build outputs only. They do not prove device support, f
 The native WSL checkout selects `ipados-17.7.11-21H461` and XNU `d8b80295118ef25ac3a784134bcf95cd8e88109f`. `unixnu fetch`, `unixnu status --json`, and `unixnu defconfig garnet_defconfig` succeeded. `python3 scripts/check-xnu-series.py ../UniXNU` reported 58 patches applied in a disposable clone. The example guard remains enabled in the working branch. These checks alone do not validate the inherited iPad product identity and ADT data, compilation, iOS ABI, or hardware boot.
 
 Using device commit `d242167` in a separate native WSL build clone with `example = false` only in that clone, `python3 unixnu build kernel -D ../UniXNU-garnet-build-ios17` completed and produced `out/garnet/ipados-17.7.11-21H461/garnet/kernel/kernel.macho` (51,015,680 bytes, SHA-256 `2c260065f0518ab20a1edd7b9361bbde5d117432581e562ddfe8da8fbacdc5e0`, independently checked with `sha256sum`). Its first bootstrap link reported missing mockfs symbols, after which the build created the supporting archives and completed the final prelink. This artifact includes Apple-derived prelinked inputs: do not publish it. Its successful build does not establish correct ADT, firmware compatibility, PAC behavior, iOS userspace compatibility, or hardware boot.
+
+## Independent audit (2026-11-11)
+
+The published WSL checkout was independently checked at `d95766f` on `bringup/ios17`; its working tree was clean and it tracked `origin/bringup/ios17`. `board.toml` still has `example = true`, and selects `ipados-17.7.11-21H461`. The source lock records XNU `d8b80295118ef25ac3a784134bcf95cd8e88109f` and SM7435 feed `cf8522069a9d54151bc42bfe487ac63b6a2c4aeb`. The series checker again passed with 58 patches, and the porting-record checker reported 13 structured areas.
+
+The independently located host artifacts are:
+
+* `kernel/kernel.macho`: 51,015,680 bytes, SHA-256 `2c260065f0518ab20a1edd7b9361bbde5d117432581e562ddfe8da8fbacdc5e0`.
+* `payload/payload.img`: 201,326,592 bytes (192 MiB), SHA-256 `d03639e75aacf020732921195c492a9d250be6806cf105f2956b99f0f2030e6f`.
+* `uefi-garnet-research/Build/garnetPkg/DEBUG_CLANGPDB/FV/SILICIUM_UEFI.fd`: 3,145,728 bytes, SHA-256 `5b2e8e440d1c22f789b8d577eb203c1843dedaaa22b2550ffe524161005199f3`; the firmware log ends with `- Done -`.
+
+No `boot.img` was found under the WSL work area. Running `unixnu bootimg` with the experimental UEFI checkout and compiled hardware DTB failed in the BootShim validation with `the ARM64 image header does not describe the shim plus the firmware volume`. Therefore the host artifacts must not be described as a boot image or as device-ready. The memory node used to make the payload pass is a provisional `0x80000000` + `0x80000000` range and is not hardware evidence for garnet.
