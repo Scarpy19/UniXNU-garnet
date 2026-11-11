@@ -38,7 +38,9 @@ The native Linux XNU build completed and produced `kernel.macho` (51,015,680 byt
 
 The garnet firmware build completed after adding the missing `UniXNULib` library assignment to the experimental board DSC, and rerunning with `ENABLE_SECUREBOOT=0`; the output firmware file is `SILICIUM_UEFI.fd` of 3,145,728 bytes.
 
-These artifacts are host-build outputs only. They do not prove device support, firmware safety, or a successful boot. The payload stage result and final boot image remain to be recorded.
+These artifacts are host-build outputs only. They do not prove device support, firmware safety, or a successful boot. The payload stage was then attempted against the experimental kernel and firmware and failed during device-tree processing with `unixnu: ADT handoff requires one contiguous DRAM range`; no boot image was produced.
+
+The final boot image therefore remains to be produced; no boot image or device boot has been verified.
 
 ## iPadOS 17 WSL research branch
 
