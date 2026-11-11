@@ -31,6 +31,7 @@ include_dirs = ["soc:dts"]
 config = "garnet"
 dsc = "Platforms/Xiaomi/garnetPkg/garnet.dsc"
 fd = "Build/garnetPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
+defines = { ENABLE_SECUREBOOT = "0" }
 submodules = ["Binaries", "Common/Mu", "Common/Mu_OEM_Sample", "Silicium-ACPI", "Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl"]
 packages = ["{uefi}", "{uefi}/Platforms/Xiaomi", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}", "{uefi}/Common/Mu", "{uefi}/Common/Mu_OEM_Sample", "{uefi}/Silicon/Qualcomm", "{uefi}/Silicon/Silicium", "{uefi}/Silicium-ACPI", "{uefi}/Silicium-ACPI/Platforms/Xiaomi", "{uefi}/Silicium-ACPI/Silicon/Qualcomm"]
 
