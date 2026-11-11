@@ -140,6 +140,19 @@ the logger must be integrated with its package and library dependencies before
 the Tools logger can provide a firmware log. No hardware reboot is implied by
 this configuration change; rebuild payload and boot image before testing it.
 
+The rebuilt diagnostic image was produced from the native WSL build with the
+HakiOS garnet DTB passed explicitly to `bootimg`:
+
+* `garnet-boot-diagnostics.img`
+* 203,194,368 bytes
+* SHA-256: `7a67c78c135721602608bb7f1ee91f6ad1142fd6958d5a0d01ed61e0b41d74ea`
+* DTB SHA-256: `66094d6eb28841efc765816b09b8db0d819502e04c7def57066278a4ae184848`
+* firmware SHA-256: `5b2e8e440d1c22f789b8d577eb203c1843dedaaa22b2550ffe524161005199f3`
+
+Its `boot.json` records `hardware_tested: false`. The image has not yet been
+booted on the device; the next test should select `UniXNU` and record whether
+the screen reaches the `DARWINBOOT:` checkpoint or returns to the menu.
+
 ## Repeat menu boot with complete host capture
 
 The same image was booted again after the device was manually returned to
