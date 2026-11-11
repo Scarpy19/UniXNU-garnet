@@ -123,6 +123,23 @@ yet confirm XNU entry or peripheral operation. The test log is retained locally 
 `logs/device-test/second-fastboot-boot.txt` and
 `logs/device-test/second-post-30s.txt`; device identifiers are not committed.
 
+## Bring-up interpretation and next experiment
+
+The official bring-up sequence classifies the visible UniXNU menu as the Stage 2
+checkpoint. The payload contains an `xnu` entry at
+`EFI/UniXNU/Payloads/kernel.macho`; the next expected checkpoint is a
+`DARWINBOOT:` line followed by kernel virtual/physical addresses, framebuffer
+geometry, EL1 state and the XNU entry address. A return to the menu indicates a
+DarwinBoot refusal and requires checking the Mach-O, ADT, trust cache and
+identity rather than changing UEFI memory values blindly.
+
+The next experimental payload enables `Tools` and adds `serial=3`, `debug=0x14e`
+and `boot-progress=2` while retaining `cpus=1`. The current pinned UniXNU tree
+does not contain `AdvancedLogDxe`, so QR firmware-log capture is not claimed yet;
+the logger must be integrated with its package and library dependencies before
+the Tools logger can provide a firmware log. No hardware reboot is implied by
+this configuration change; rebuild payload and boot image before testing it.
+
 ## Repeat menu boot with complete host capture
 
 The same image was booted again after the device was manually returned to
