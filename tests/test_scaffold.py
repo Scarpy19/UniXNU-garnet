@@ -17,6 +17,7 @@ class ScaffoldTests(unittest.TestCase):
         self.assertIs(self.board["board"]["example"], True)
         self.assertEqual(self.board["board"]["name"], "garnet")
         self.assertIn("cpus=1", self.board["payload"]["kernel_args"])
+        self.assertNotIn("soc:patches/xnu/series", self.board["kernel"]["patch_series"])
 
     def test_soc_feed_is_immutable_and_matches_board(self):
         sources = self.feeds["source"]

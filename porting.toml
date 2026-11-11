@@ -10,7 +10,7 @@ summary = "Preliminary research scaffold; no verified build or device boot."
 id = "configuration"
 status = "planned"
 components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
-paths = ["board.toml", "feeds.toml", "configs/**", "patches/xnu/**", ".gitignore", "docs/linux-host.md"]
+paths = ["board.toml", "feeds.toml", "unixnu.lock", "configs/**", "patches/xnu/**", ".gitignore", "docs/linux-host.md"]
 inputs = ["Pinned UniXNU and preliminary SM7435 sources; target OS profile."]
 configuration = ["Example guard remains enabled; profile 27 is unverified."]
 procedure = ["Resolve sources and inspect configuration after required inputs are established."]
@@ -42,7 +42,7 @@ paths = ["dts/**", "configs/**"]
 inputs = ["SM7435 CPU topology, PSCI, interrupt controller, timer, and PAC."]
 configuration = ["The preliminary boot arguments request one CPU."]
 procedure = ["Verify boot CPU and PAC, then record timer and secondary CPU checkpoints."]
-findings = ["The shared SMP patch is experimental and has not been verified on garnet.", "Android on the connected target reported eight processors and did not advertise paca or pacg in its CPU feature list; this does not establish EL1 behavior under UEFI."]
+findings = ["The shared SMP patch does not apply to the selected XNU 27 profile after its architecture changes; the provisional board omits that series and keeps cpus=1.", "Android on the connected target reported eight processors and did not advertise paca or pacg in its CPU feature list; this does not establish EL1 behavior under UEFI."]
 completion = ["Each enabled CPU, timer, and interprocessor interrupt works on the target."]
 limits = ["No CPU or PAC behavior has been observed on the target."]
 next_action = ["Collect target CPU feature and boot CPU evidence."]

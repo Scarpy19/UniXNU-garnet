@@ -17,7 +17,9 @@ include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
 [kernel]
 defconfig = "garnet_defconfig"
 config_fragments = ["arch:configs/common.config", "soc:configs/sm7435.config", "os:configs/ipados.config"]
-patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series", "os:patches/xnu/series", "device:patches/xnu/series"]
+# The SM7435 SMP series targets a different XNU baseline and does not apply
+# to this profile. Single-CPU bring-up must not imply SMP support.
+patch_series = ["arch:patches/xnu/series", "os:patches/xnu/series", "device:patches/xnu/series"]
 
 [device_tree]
 source = "device:dts/garnet.dts"

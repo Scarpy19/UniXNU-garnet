@@ -1,0 +1,4 @@
+# Resolved git sources, written by "unixnu fetch". Local sources are never recorded.
+
+[source."xnu"]
+commit = "ac9718fb1af618d5ce8678d0dc6e8a58f252216f"
