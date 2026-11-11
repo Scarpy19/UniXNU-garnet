@@ -1,7 +1,31 @@
+diff --git a/BootShim/BootShim.S b/BootShim/BootShim.S
+index 4d208553..e062998b 100644
+--- a/BootShim/BootShim.S
++++ b/BootShim/BootShim.S
+@@ -7,7 +7,7 @@ _StackBase:
+   .quad FD_BASE         /* Text Offset */
+ 
+ _StackSize:
+-  .quad FD_SIZE         /* Image Size */
++  .quad FD_SIZE + 0x70  /* Image Size: shim through the appended firmware */
+   .quad 0               /* Flags */
+   .quad 0               /* Reserved */
+   .quad 0               /* Reserved */
 diff --git a/Platforms/Xiaomi/garnetPkg/garnet.dsc b/Platforms/Xiaomi/garnetPkg/garnet.dsc
+index 50defe90..0cded650 100644
 --- a/Platforms/Xiaomi/garnetPkg/garnet.dsc
 +++ b/Platforms/Xiaomi/garnetPkg/garnet.dsc
-@@ -79,4 +79,8 @@
+@@ -67,6 +67,7 @@
+   gQcomPkgTokenSpaceGuid.PcdPlatformType|"LA"
+ 
+ [LibraryClasses]
++  UniXNULib|UniXNUPkg/Library/UniXNULib/UniXNULib.inf
+   #
+   # Memory Libraries
+   #
+@@ -78,6 +79,10 @@
+   ConfigurationMapLib|garnetPkg/Library/ConfigurationMapLib/ConfigurationMapLib.inf
+ 
  [Components]
 +  UniXNUPkg/Application/UniXNU/UniXNU.inf
 +  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
@@ -11,13 +35,17 @@ diff --git a/Platforms/Xiaomi/garnetPkg/garnet.dsc b/Platforms/Xiaomi/garnetPkg/
    # ACPI Tables
    #
 diff --git a/Platforms/Xiaomi/garnetPkg/garnet.fdf b/Platforms/Xiaomi/garnetPkg/garnet.fdf
+index f16b6d7c..4fd0e82f 100644
 --- a/Platforms/Xiaomi/garnetPkg/garnet.fdf
 +++ b/Platforms/Xiaomi/garnetPkg/garnet.fdf
-@@ -86,2 +86,7 @@
+@@ -83,6 +83,11 @@ READ_LOCK_STATUS   = TRUE
+   !include Include/DXE.inc
+   !include Include/RAW.inc
+ 
 +  INF UniXNUPkg/Application/UniXNU/UniXNU.inf
 +  INF UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
 +  INF UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
 +  INF DarwinBootPkg/Driver/DarwinBoot.inf
-+
-   # RAM Manager
++   # RAM Manager
    INF SiliciumPkg/Drivers/RamManagerDxe/RamManagerDxe.inf
+ 
