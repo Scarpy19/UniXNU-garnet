@@ -36,3 +36,11 @@ packages = ["{uefi}", "{uefi}/Platforms/Xiaomi", "{tree}/package", "{tree}/drive
 
 [payload]
 kernel_args = ["-v", "cpus=1"]
+
+# The boot-image DTB must be the garnet DTB used by the functional
+# JosephMontfort HakiOS/Mu-Silicium port. The board DTS remains the simplified
+# UniXNU ADT source because UniXNU's ADT handoff currently requires one
+# contiguous memory range. Copy the reference DTB into build/garnet before
+# running `unixnu bootimg`; it is a local, non-repository input.
+[bootimg]
+dtb = "build/garnet/hakios-garnet.dtb"
