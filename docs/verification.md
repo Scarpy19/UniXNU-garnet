@@ -14,5 +14,6 @@ No host build, device boot or peripheral success has been verified for this port
 
 - `py -3.14 -m unittest discover -s tests -v`: checks the example guard, single-CPU intent, feed pin format, and device file references. This does not validate hardware.
 - From the pinned UniXNU checkout, `py -3.14 scripts/porting-record.py check --device ../UniXNU-garnet` reports `garnet: 13 structured areas checked`. This checks the record schema, not whether the planned work is complete.
+- The same checker with `--base bee69e8` also reports `13 structured areas checked` after adding ownership for the configuration and patch paths changed since that commit.
 - `dtc -I dts -O dtb -i ../UniXNU-sm7435-common/dts -o /dev/null dts/garnet.dts`: syntax check only. The selected SoC DTSI reports `simple_bus_reg` for `/soc/timer`; investigate the binding before treating the description as complete. No DTB from this skeleton is suitable for boot.
 - `python3 /mnt/d/UniXNU/UniXNU/unixnu build kernel -D /mnt/d/UniXNU/UniXNU-garnet`: on Debian WSL, UniXNU rejected the build with `EXAMPLE device repository` and exit code 1. Configuration loading fetched the pinned SoC feed before the guard ran, so this guard does not prevent all network or filesystem activity. The intentionally absent memory node and missing firmware configuration remain blockers.
