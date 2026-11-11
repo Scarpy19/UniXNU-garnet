@@ -102,3 +102,21 @@ The boot-image board configuration now names the external DTB as
 source because the current ADT generator requires one contiguous memory range;
 the HakiOS DTB preserves the real garnet multi-bank memory and reservations for
 the Android boot-image handoff.
+
+## Second garnet device trial
+
+The second image was tested with the explicit user authorization to use
+`fastboot boot` (RAM-only; no partition write):
+
+* Image: `garnet-boot-hakios-dtb.img`
+* Size: 203,194,368 bytes
+* SHA-256: `56c9fa7340a9170135f001e6c28d72db6834d294c4570d985219577027d8016e`
+* Fastboot transfer: `Sending 'boot.img' (198432 KB) OKAY`
+* Boot request: `Booting OKAY`
+* Total transfer time: 4.630 seconds
+
+After 30 seconds, neither `fastboot devices` nor `adb devices` listed the
+phone. No UEFI or XNU output was exposed over USB. This is a second failed
+handoff, not a boot success. The test log is retained locally under
+`logs/device-test/second-fastboot-boot.txt` and
+`logs/device-test/second-post-30s.txt`; device identifiers are not committed.
