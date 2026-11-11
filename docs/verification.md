@@ -123,6 +123,25 @@ yet confirm XNU entry or peripheral operation. The test log is retained locally 
 `logs/device-test/second-fastboot-boot.txt` and
 `logs/device-test/second-post-30s.txt`; device identifiers are not committed.
 
+The v4 diagnostic image still showed the fallback menu with `drivers 0 loaded /
+0 failed`, `kits 0`, and `acpi 0`. Its payload was therefore not published by
+`UniXNURamDiskDxe`. HakiOS provides a garnet payload base of `0xA8000000`; the
+board now patches the existing `/chosen` node in the firmware DTB with a
+192-MiB initrd range ending at `0xB4000000`. `bootimg.py` was also fixed to
+reuse an existing FDT node instead of failing with `FDT_ERR_EXISTS`.
+
+The resulting untested image is:
+
+* `garnet-boot-initrd-range-v2.img`
+* 203,198,464 bytes
+* SHA-256: `967452c57471da2d3749097867339494e6af6f9a93979475bf2d127ff7f73a9b`
+* header version: 4
+* ramdisk bytes: 201,326,592
+
+This is a HakiOS-derived address experiment, not a general DRAM-map claim. The
+next device result must distinguish payload discovery (`xnu` entry visible)
+from DarwinBoot and XNU entry.
+
 ## Bring-up interpretation and next experiment
 
 The official bring-up sequence classifies the visible UniXNU menu as the Stage 2
