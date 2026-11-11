@@ -12,4 +12,10 @@ git -C ../uefi-garnet-reference apply --check ../UniXNU-garnet/patches/uefi/0001
 
 This check passed locally. It does not apply the patch, resolve library conflicts, check transitive package dependencies, build firmware, or establish that the FD fits or boots. Before building, review inherited DSC definitions, source licenses, submodules, vendor-input provenance and hashes, log exporter dependencies, `PACKAGES_PATH`, the target memory map, and firmware DTB. The current board guard remains enabled. Do not replace it with an existing prebuilt FD or assume boot-image header compatibility.
 
+## Vendor-input reference inventory
+
+`python3 scripts/inventory-uefi-inputs.py ../uefi-garnet-reference` reads the pinned Git revision and lists garnet-specific binary INF and RAW references from `Include/DXE.inc` and `Include/RAW.inc`. It includes entries inside conditional blocks without evaluating the conditions. It does not read binaries or prove which references are needed by a build, whether files exist, whether INF transitive dependencies exist, or whether redistribution is permitted. Use it as a starting point for a provenance and hash inventory, not as an extraction or flashing script.
+
+At the pinned revision this reported **51 INF references and 6 RAW references**, including conditional entries. `git ls-tree -r --name-only HEAD Binaries/garnet` in the reference checkout returned no tracked files at that path. This does not establish whether a separately obtained vendor input is available or usable.
+
 Use the [upstream firmware integration guide](https://unixnu.com/porting/uefi-firmware) and [log capture guide](https://unixnu.com/porting/log-capture). Hardware access, image boot and partition writes require the approvals described in `AGENTS.md`.
