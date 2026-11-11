@@ -8,7 +8,7 @@ The end goal is an evidence-backed boot on the user's garnet device, not merely 
 4. **Hardware safety:** Before any device operation, explain the exact command, image provenance, recovery path and risks and obtain user approval. Never flash partitions without separate authorization. Confirm transport and log capture first.
 5. **Hardware milestones:** Record UEFI output, loader handoff, XNU entry, SMP, storage, display, input, GPU, audio and battery separately. Distinguish device observations from upstream claims. Test on the relevant RAM variants before claiming both work.
 
-No host build, device boot or peripheral success has been verified for this port yet.
+An experimental kernel host build is recorded below. No garnet UEFI build, device boot or peripheral success has been verified.
 
 ## Initial scaffold checks
 
@@ -32,4 +32,6 @@ The selected SM7435 SoC's `sm7435-smp-secondary.patch` does not apply to XNU `ac
 
 ## iPadOS 17 WSL research branch
 
-The native WSL checkout selects `ipados-17.7.11-21H461` and XNU `d8b80295118ef25ac3a784134bcf95cd8e88109f`. `unixnu fetch`, `unixnu status --json`, and `unixnu defconfig garnet_defconfig` succeeded. `python3 scripts/check-xnu-series.py ../UniXNU` reported 58 patches applied in a disposable clone. The example guard remains enabled. These are host configuration and patch applicability checks only: the inherited iPad product identity and ADT data, compilation, iOS ABI, and actual hardware boot are not verified for garnet.
+The native WSL checkout selects `ipados-17.7.11-21H461` and XNU `d8b80295118ef25ac3a784134bcf95cd8e88109f`. `unixnu fetch`, `unixnu status --json`, and `unixnu defconfig garnet_defconfig` succeeded. `python3 scripts/check-xnu-series.py ../UniXNU` reported 58 patches applied in a disposable clone. The example guard remains enabled in the working branch. These checks alone do not validate the inherited iPad product identity and ADT data, compilation, iOS ABI, or hardware boot.
+
+Using device commit `d242167` in a separate native WSL build clone with `example = false` only in that clone, `python3 unixnu build kernel -D ../UniXNU-garnet-build-ios17` completed and produced `out/garnet/ipados-17.7.11-21H461/garnet/kernel/kernel.macho` (51,015,680 bytes, SHA-256 `2c260065f0518ab20a1edd7b9361bbde5d117432581e562ddfe8da8fbacdc5e0`, independently checked with `sha256sum`). Its first bootstrap link reported missing mockfs symbols, after which the build created the supporting archives and completed the final prelink. This artifact includes Apple-derived prelinked inputs: do not publish it. Its successful build does not establish correct ADT, firmware compatibility, PAC behavior, iOS userspace compatibility, or hardware boot.

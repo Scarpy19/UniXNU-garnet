@@ -8,7 +8,7 @@ image or a verified device configuration.
 
 - `board.example = true` — the configuration is guarded and cannot produce a boot image.
 - OS profile is a research target (`ipados-17.7.11-21H461`); iOS boot is not verified.
-- No kernel, UEFI firmware, or boot image has been compiled.
+- An experimental iPadOS 17 prelinked kernel was built in a separate WSL checkout; it is not verified for device boot. No garnet UEFI firmware or boot image has been built.
 - The earlier 72-patch check applied to the previous iPadOS 27 profile, not this profile.
 - UEFI integration patch applies textually but has not been compiled or booted.
 
