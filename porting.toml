@@ -1,0 +1,189 @@
+schema_version = 1
+
+[device]
+name = "garnet"
+soc = "SM7435"
+os_profile = "ipados-27.0.1-24A446"
+summary = "Preliminary research scaffold; no verified build or device boot."
+
+[[area]]
+id = "configuration"
+status = "planned"
+components = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
+paths = ["board.toml", "feeds.toml", "configs/**"]
+inputs = ["Pinned UniXNU and preliminary SM7435 sources; target OS profile."]
+configuration = ["Example guard remains enabled; profile 27 is unverified."]
+procedure = ["Resolve sources and inspect configuration after required inputs are established."]
+findings = ["The SoC feed is pinned; ARM64e compatibility is not established."]
+completion = ["Configuration and all selected component dependencies resolve with reviewed inputs."]
+limits = ["The board is deliberately incomplete and is not ready to build."]
+next_action = ["Verify PAC and complete the board resource inventory."]
+evidence = []
+
+[[area]]
+id = "firmware"
+status = "planned"
+components = []
+paths = ["proprietary-files.txt", "docs/evidence.md"]
+inputs = ["Garnet UEFI source, firmware files, device DTB, and redistribution terms."]
+configuration = ["No firmware build settings have been selected."]
+procedure = ["Audit the exact UEFI revision and integrate UniXNU and DarwinBoot modules."]
+findings = ["The audited garnet firmware configuration does not establish UniXNU integration."]
+completion = ["Firmware builds with required modules and boots on the target with logs."]
+limits = ["Firmware sources and device-specific binary inputs are not yet integrated."]
+next_action = ["Identify the firmware input list and audit provenance."]
+evidence = []
+
+[[area]]
+id = "cpu"
+status = "planned"
+components = []
+paths = ["dts/**", "configs/**"]
+inputs = ["SM7435 CPU topology, PSCI, interrupt controller, timer, and PAC."]
+configuration = ["The preliminary boot arguments request one CPU."]
+procedure = ["Verify boot CPU and PAC, then record timer and secondary CPU checkpoints."]
+findings = ["The shared SMP patch is experimental and has not been verified on garnet."]
+completion = ["Each enabled CPU, timer, and interprocessor interrupt works on the target."]
+limits = ["No CPU or PAC behavior has been observed on the target."]
+next_action = ["Collect target CPU feature and boot CPU evidence."]
+evidence = []
+
+[[area]]
+id = "memory"
+status = "planned"
+components = []
+paths = ["dts/**", "docs/evidence.md"]
+inputs = ["Device RAM banks, reservations, firmware memory map, and DMA requirements."]
+configuration = ["The board DTS intentionally has no memory node."]
+procedure = ["Compare target memory descriptions with the exact UEFI memory map."]
+findings = ["A shared SoC description cannot establish the board's usable RAM ranges."]
+completion = ["RAM and reservations match target observations and loader allocations."]
+limits = ["RAM and reservation ranges have not been verified."]
+next_action = ["Obtain target-specific memory and firmware map evidence."]
+evidence = []
+
+[[area]]
+id = "storage"
+status = "planned"
+components = []
+paths = ["docs/evidence.md"]
+inputs = ["Garnet UFS controller, firmware block I/O, partition and root inputs."]
+configuration = ["Native UFS is not selected."]
+procedure = ["Identify the controller and verify read-only access before considering writes."]
+findings = ["HakiOS reports storage support; this does not establish UniXNU support."]
+completion = ["Storage reads, root access, and any approved persistence work on the target."]
+limits = ["No storage path has been tested in this port."]
+next_action = ["Inventory the UFS interface and compatible UniXNU components."]
+evidence = []
+
+[[area]]
+id = "display"
+status = "planned"
+components = []
+paths = ["docs/evidence.md"]
+inputs = ["Garnet panel, firmware framebuffer, pixel format, and backlight."]
+configuration = ["No display driver or board display wiring has been selected."]
+procedure = ["Inspect the firmware framebuffer and validate a known frame on the target."]
+findings = ["A reference project reports display output, not a result for this port."]
+completion = ["Correct display output and backlight operation are observed on the target."]
+limits = ["No display output has been tested in this port."]
+next_action = ["Identify the target framebuffer and display interfaces."]
+evidence = []
+
+[[area]]
+id = "input"
+status = "planned"
+components = []
+paths = ["docs/evidence.md"]
+inputs = ["Garnet touchscreen, bus, power rails, firmware, and physical buttons."]
+configuration = ["No input driver or board wiring has been selected."]
+procedure = ["Check target hardware and driver interfaces before implementing input."]
+findings = ["Reference touchscreen claims require target and ABI verification."]
+completion = ["Touch and physical buttons are observed working on the target."]
+limits = ["No input implementation has been tested in this port."]
+next_action = ["Verify touchscreen model and required firmware provenance."]
+evidence = []
+
+[[area]]
+id = "gpu"
+status = "planned"
+components = []
+paths = ["configs/**", "docs/evidence.md"]
+inputs = ["Adreno 710 revision, GPU firmware, clocks, mappings, and driver ABI."]
+configuration = ["Native Adreno support is not selected."]
+procedure = ["Audit compatible drivers and firmware before enabling GPU access."]
+findings = ["A separate project reports OpenGL ES; it is not evidence for this port."]
+completion = ["A verified graphics workload renders correctly on garnet."]
+limits = ["No GPU driver has been built or tested for this port."]
+next_action = ["Inventory the GPU interface and legally obtained firmware."]
+evidence = []
+
+[[area]]
+id = "network"
+status = "planned"
+components = []
+paths = ["docs/evidence.md"]
+inputs = ["Garnet wireless hardware, firmware, transport, and compatible drivers."]
+configuration = ["No network component is selected."]
+procedure = ["Identify hardware and dependencies after core boot milestones."]
+findings = ["Network functionality remains unverified."]
+completion = ["Network hardware associates and transfers traffic on the target."]
+limits = ["No network implementation has been tested."]
+next_action = ["Identify wireless hardware and firmware inputs."]
+evidence = []
+
+[[area]]
+id = "audio"
+status = "planned"
+components = []
+paths = ["docs/evidence.md"]
+inputs = ["Audio DSP, amplifiers, firmware, and board routing."]
+configuration = ["No audio component is selected."]
+procedure = ["Audit target audio hardware and available compatible drivers."]
+findings = ["Reference audio support is reported as partial."]
+completion = ["Basic audio playback is observed on the target."]
+limits = ["No audio implementation has been tested."]
+next_action = ["Inventory audio hardware and firmware requirements."]
+evidence = []
+
+[[area]]
+id = "power"
+status = "planned"
+components = []
+paths = ["docs/evidence.md"]
+inputs = ["Garnet PMIC, battery, charging, thermal limits, and power management."]
+configuration = ["No board-specific power component is selected."]
+procedure = ["Identify safe read-only measurements and compatible power interfaces."]
+findings = ["Battery status and charging behavior are not established for this port."]
+completion = ["Battery reporting and charging behavior are validated on the target."]
+limits = ["No power management implementation has been tested."]
+next_action = ["Inventory power controllers and identify safe measurement methods."]
+evidence = []
+
+[[area]]
+id = "packaging"
+status = "planned"
+components = []
+paths = ["board.toml", "docs/verification.md"]
+inputs = ["Verified UEFI FD, hardware DTB, XNU payload, image format, and seed."]
+configuration = ["No boot image or package settings are complete."]
+procedure = ["Review the selected boot chain and build artifacts before packaging."]
+findings = ["Reference Android and UEFI build paths use different boot header versions."]
+completion = ["A reproducible image passes structural checks and an approved device test."]
+limits = ["No image has been built or validated."]
+next_action = ["Establish the firmware and bootloader handoff requirements."]
+evidence = []
+
+[[area]]
+id = "diagnostics"
+status = "planned"
+components = []
+paths = ["tests/**", "docs/verification.md"]
+inputs = ["Safe device access, recovery procedure, firmware log and kernel log transport."]
+configuration = ["Only host scaffold checks exist."]
+procedure = ["Prepare log capture and obtain approval before device commands."]
+findings = ["The example guard rejects the kernel build; syntax checks are not hardware evidence."]
+completion = ["Logs identify each verified firmware and kernel handoff checkpoint."]
+limits = ["No logs have been collected from the target."]
+next_action = ["Identify a safe log transport and recovery procedure."]
+evidence = []

@@ -1,0 +1,27 @@
+schema_version = 2
+
+[board]
+# Keep this guard until board inputs and all validation gates are complete.
+example = true
+name = "garnet"
+soc = "SM7435"
+soc_source = "sm7435"
+# Research target only: PAC and arm64e support are not verified on garnet.
+os_profile = "ipados-27.0.1-24A446"
+description = "Preliminary garnet bring-up; not bootable"
+kit = "garnet"
+
+[components]
+include = ["ArmDTPlatform", "ArmCpu", "SoftwareAES", "XnuPrelink", "DarwinBoot"]
+
+[kernel]
+defconfig = "garnet_defconfig"
+config_fragments = ["arch:configs/common.config", "soc:configs/sm7435.config", "os:configs/ipados.config"]
+patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series", "os:patches/xnu/series", "device:patches/xnu/series"]
+
+[device_tree]
+source = "device:dts/garnet.dts"
+include_dirs = ["soc:dts"]
+
+[payload]
+kernel_args = ["-v", "cpus=1"]

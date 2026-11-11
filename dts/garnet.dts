@@ -1,0 +1,9 @@
+/dts-v1/;
+/include/ "sm7435.dtsi"
+
+/* Research skeleton only. RAM, reservations, boot CPU and board wiring have not
+ * been verified. Do not use this tree for a payload or a device boot. */
+/ {
+    model = "Xiaomi garnet (preliminary)";
+    compatible = "xiaomi,garnet", "qcom,sm7435";
+};

@@ -3,6 +3,7 @@ unixnu.local.toml
 .cache/
 out/
 build/
+__pycache__/
 *.img
 *.ipsw
 *.dtb
