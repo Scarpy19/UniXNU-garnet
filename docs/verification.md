@@ -71,3 +71,34 @@ The host copy was checked before testing: 202,551,296 bytes and SHA-256 `53dd4bb
 The only image operation was `fastboot boot garnet-boot.img`; no `flash`, `erase`, or partition write was issued. Fastboot accepted and transferred the image (`Sending 'boot.img' ... OKAY`, `Booting OKAY`), but after 30 seconds the device remained in fastboot and did not expose ADB. This is a failed UEFI/XNU handoff, not a boot success. No UEFI or XNU logs were exposed over USB.
 
 `fastboot reboot` returned `OKAY`. The device then appeared in recovery ADB, and `adb reboot` returned it to normal Android. Post-test Android properties reported `ro.product.device=garnet`, `ro.product.model=2312DRA50G`, and `MemTotal=7478208 kB` (consistent with an 8 GB variant). These observations do not establish the physical DRAM base or a contiguous memory range. Raw device logs are retained locally under `logs/device-test/` and are intentionally not committed because they contain device identifiers.
+
+## HakiOS garnet DTB integration
+
+The functional JosephMontfort HakiOS device repository is the primary garnet
+reference for the second boot-image attempt. Its UEFI configuration confirms
+`uefi_fd.base = 0xA7100000`, `uefi_fd.size = 0x300000`, and
+`boot_shim.payload_base = 0xA8000000`. The UniXNU UEFI build already used the
+same FD base and size; the important missing input was the functional garnet
+DTB.
+
+The HakiOS reference DTB was copied locally from
+`hakios-sm7435/uefi/files/Resources/DTBs/garnet.dtb` to the WSL build output
+as `build/garnet/hakios-garnet.dtb`. Its SHA-256 is
+`66094d6eb28841efc765816b09b8db0d819502e04c7def57066278a4ae184848`.
+It reports `ddr_size = <0x08>` and the same reserved-memory node names and
+addresses observed through the live Android `/proc/device-tree` tree. It is a
+reference input, not a read-back dump: SELinux blocked the live FDT properties
+and the device bootloader does not support `fastboot fetch`.
+
+The second image was built with that DTB and the existing iOS 17 kernel,
+payload, and 3 MiB UEFI volume:
+
+* `/home/scarpy/UniXNU/garnet-boot-hakios-dtb.img`
+* 203,194,368 bytes
+* SHA-256: `pending independent verification`
+
+The boot-image board configuration now names the external DTB as
+`build/garnet/hakios-garnet.dtb`. The simplified UniXNU DTS remains the ADT
+source because the current ADT generator requires one contiguous memory range;
+the HakiOS DTB preserves the real garnet multi-bank memory and reservations for
+the Android boot-image handoff.
