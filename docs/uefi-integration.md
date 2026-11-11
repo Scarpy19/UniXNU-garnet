@@ -2,7 +2,7 @@
 
 The candidate source is [garnet-linux/Mu-Silicium](https://github.com/garnet-linux/Mu-Silicium) at `f8779ea0bfb33e2aec31da4a902b4a4eb8abd044`. `patches/uefi/0001-garnet-unixnu-handoff.patch` is a **preliminary, unapplied source patch** against that revision, not a firmware image.
 
-The patch adds the UniXNU menu, boot-option driver, initrd RAM-disk driver, and DarwinBoot to the platform DSC and FDF. It also declares DiskIo and FAT in the DSC and maps `HobLib` and `FdtLib`; the platform's existing `Include/DXE.inc` already places DiskIo, FAT, PartitionDxe, and English collation in the FDF.
+The patch adds the UniXNU menu, boot-option driver, initrd RAM-disk driver, and DarwinBoot to the platform DSC and FDF. The inherited `SiliciumPkg.dsc.inc` already declares DiskIo and FAT and maps `HobLib` and `FdtLib`; the platform's existing `Include/DXE.inc` places DiskIo, FAT, PartitionDxe, and English collation in the FDF. The patch avoids duplicating these inherited declarations.
 
 The following only checks textual applicability against a checkout at the exact source revision:
 
@@ -15,6 +15,8 @@ This check passed locally. It does not apply the patch, resolve library conflict
 ## Persistent boot-variable risk
 
 The proposed patch includes `UniXNUDxe`. In the pinned UniXNU source, `package/UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.c` uses `SetVariable` with `EFI_VARIABLE_NON_VOLATILE` to register a `Boot####` option and place it first in `BootOrder`. Therefore, even a temporary `fastboot boot` of firmware containing this driver could modify persistent UEFI variables if the platform provides persistent variable services. Whether garnet's implementation does so and how to restore it have not been established. Do not boot this patch until its variable behavior, a non-persistent alternative or explicit rollback, and device recovery have been reviewed and the user separately approves the exact test.
+
+The pinned garnet `Include/DXE.inc` includes EDK II `VariableRuntimeDxe` and `BdsDxe`. The inherited `SiliciumPkg.dsc.inc` sets `PcdEmuVariableNvModeEnable|TRUE`, but the effective configuration, implementation and persistence behavior have not been verified. These source observations do not establish that writes are harmless. UniXNU's application is a UEFI application, so a manually launched application without the registrar is a possible design to investigate; it is not yet an implemented or validated garnet boot path. A search limited to the garnet, Netrani and Qualcomm platform directories did not find a shell INF or boot-manager menu reference. A shell or other launch method could still be included elsewhere, so no manual-launch capability is assumed.
 
 ## Vendor-input reference inventory
 

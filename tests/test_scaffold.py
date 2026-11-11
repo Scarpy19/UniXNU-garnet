@@ -33,6 +33,14 @@ class ScaffoldTests(unittest.TestCase):
         self.assertTrue((ROOT / source.removeprefix("device:")).is_file())
         self.assertTrue((ROOT / "patches/xnu/series").is_file())
 
+    def test_uefi_patch_uses_inherited_platform_dependencies(self):
+        patch = (ROOT / "patches/uefi/0001-garnet-unixnu-handoff.patch").read_text(encoding="utf-8")
+        additions = [line for line in patch.splitlines() if line.startswith("+") and not line.startswith("+++")]
+        for module in ("UniXNU.inf", "UniXNUDxe.inf", "UniXNURamDiskDxe.inf", "DarwinBoot.inf"):
+            self.assertEqual(sum(module in line for line in additions), 2, module)
+        for inherited in ("DiskIoDxe.inf", "Fat.inf", "HobLib|", "FdtLib|"):
+            self.assertFalse(any(inherited in line for line in additions), inherited)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,21 +1,12 @@
 diff --git a/Platforms/Xiaomi/garnetPkg/garnet.dsc b/Platforms/Xiaomi/garnetPkg/garnet.dsc
 --- a/Platforms/Xiaomi/garnetPkg/garnet.dsc
 +++ b/Platforms/Xiaomi/garnetPkg/garnet.dsc
-@@ -65,4 +65,6 @@
- [LibraryClasses]
-+  HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
-+  FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
-   #
-   # Memory Libraries
-   #
-@@ -79,4 +81,10 @@
+@@ -79,4 +79,8 @@
  [Components]
 +  UniXNUPkg/Application/UniXNU/UniXNU.inf
 +  UniXNUPkg/Driver/UniXNUDxe/UniXNUDxe.inf
 +  UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
 +  DarwinBootPkg/Driver/DarwinBoot.inf
-+  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
-+  FatPkg/EnhancedFatDxe/Fat.inf
    #
    # ACPI Tables
    #
