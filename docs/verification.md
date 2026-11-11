@@ -63,3 +63,11 @@ No `boot.img` was found under the WSL work area. Running `unixnu bootimg` with t
 After correcting the experimental BootShim header to report the 112-byte shim plus the 3 MiB firmware volume, `unixnu bootimg` succeeded. The resulting untested artifact is `/home/scarpy/UniXNU/garnet-boot.img`, 202,551,296 bytes, SHA-256 `53dd4bbc40e62202ea39666a0fec947f622fb6619f1a635e080900673ab53fa8`. UniXNU's `boot.json` records a 192 MiB ramdisk, the firmware SHA-256 above, DTB SHA-256 `4568d0282ec04eef3ac9fca697850ab3a92eaa7c0aeadb70f579d681d96592bb`, 112-byte shim, and `hardware_tested: false`. The repository UEFI patch now includes both the UniXNU integration and the BootShim header correction; it was rechecked against a clean revision and applied textually.
 
 This image is not device-verified. Its provisional memory map, inherited iPadOS identity, UEFI variables, firmware inputs, and kernel/DTB compatibility remain unverified. Do not boot or distribute it without a separate device-test review.
+
+## Garnet device trial (2026-11-11)
+
+The host copy was checked before testing: 202,551,296 bytes and SHA-256 `53dd4bbc40e62202ea39666a0fec947f622fb6619f1a635e080900673ab53fa8`. ADB identified the connected device as garnet / model `2312DRA50G`. The bootloader reported `product: garnet`, `unlocked: yes`, `secure: yes`, and `is-userspace: no` through read-only `fastboot getvar` queries.
+
+The only image operation was `fastboot boot garnet-boot.img`; no `flash`, `erase`, or partition write was issued. Fastboot accepted and transferred the image (`Sending 'boot.img' ... OKAY`, `Booting OKAY`), but after 30 seconds the device remained in fastboot and did not expose ADB. This is a failed UEFI/XNU handoff, not a boot success. No UEFI or XNU logs were exposed over USB.
+
+`fastboot reboot` returned `OKAY`. The device then appeared in recovery ADB, and `adb reboot` returned it to normal Android. Post-test Android properties reported `ro.product.device=garnet`, `ro.product.model=2312DRA50G`, and `MemTotal=7478208 kB` (consistent with an 8 GB variant). These observations do not establish the physical DRAM base or a contiguous memory range. Raw device logs are retained locally under `logs/device-test/` and are intentionally not committed because they contain device identifiers.
