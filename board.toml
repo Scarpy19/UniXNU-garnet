@@ -23,5 +23,14 @@ patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series", "os:patches
 source = "device:dts/garnet.dts"
 include_dirs = ["soc:dts"]
 
+# Preliminary source-derived paths only. The UEFI patch, vendor inputs,
+# memory layout, logging and build defines still need review and verification.
+[firmware]
+config = "garnet"
+dsc = "Platforms/Xiaomi/garnetPkg/garnet.dsc"
+fd = "Build/garnetPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
+submodules = ["Binaries", "Common/Mu", "Common/Mu_OEM_Sample", "Silicium-ACPI", "Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl"]
+packages = ["{uefi}", "{uefi}/Platforms/Xiaomi", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}", "{uefi}/Common/Mu", "{uefi}/Common/Mu_OEM_Sample", "{uefi}/Silicon/Qualcomm", "{uefi}/Silicon/Silicium", "{uefi}/Silicium-ACPI", "{uefi}/Silicium-ACPI/Platforms/Xiaomi", "{uefi}/Silicium-ACPI/Silicon/Qualcomm"]
+
 [payload]
 kernel_args = ["-v", "cpus=1"]

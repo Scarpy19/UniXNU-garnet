@@ -26,6 +26,14 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(source["kind"], "soc")
         self.assertRegex(source["commit"], r"^[0-9a-f]{40}$")
 
+    def test_uefi_candidate_remains_guarded_and_has_source_paths(self):
+        firmware = self.board["firmware"]
+        self.assertEqual(firmware["config"], "garnet")
+        self.assertEqual(firmware["dsc"], "Platforms/Xiaomi/garnetPkg/garnet.dsc")
+        self.assertIn("Binaries", firmware["submodules"])
+        self.assertIn("{tree}/drivers/DarwinBoot", firmware["packages"])
+        self.assertIs(self.board["board"]["example"], True)
+
     def test_referenced_device_files_exist(self):
         self.assertTrue((ROOT / "configs" / self.board["kernel"]["defconfig"]).is_file())
         source = self.board["device_tree"]["source"]
