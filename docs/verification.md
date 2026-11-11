@@ -30,6 +30,16 @@ The selected SM7435 SoC's `sm7435-smp-secondary.patch` does not apply to XNU `ac
 
 `python3 scripts/check-xnu-series.py ../UniXNU` now checks the provisional series and reports `PASS: 72 patches applied to XNU ac9718fb1af618d5ce8678d0dc6e8a58f252216f in a disposable clone.` The initial check applied 69 patches and failed at `zzz-boot-progress.patch` on `bsd/kern/bsd_init.c`; that patch expects board-specific context absent from this port. The board now selects `patches/xnu/os27.series`, preserving the other three OS patches while omitting that incompatible boot-progress layer for initial research. No other patch in the pinned XNU patch directory refers to its symbols, but this static search does not prove all build dependencies are satisfied. The omitted layer includes boot diagnostics: provide and verify an alternative before attempting hardware bring-up. The board remains guarded; source patch applicability does not establish compilation or boot.
 
+## Experimental build evidence (bringup/ios17)
+
+On branch `bringup/ios17`, the selected profile is iPadOS 17 (`ipados-17.7.11-21H461`) and the resolved XNU source is `d8b80295118ef25ac3a784134bcf95cd8e88109f`. The XNU series check reports `PASS: 58 patches applied to XNU d8b80295118ef25ac3a784134bcf95cd8e88109f in a disposable clone`.
+
+The native Linux XNU build completed and produced `kernel.macho` (51,015,680 bytes; SHA-256 `2c260065f0518ab20a1edd7b9361bbde5d117432581e562ddfe8da8fbacdc5e0`). Earlier bootstrap link errors for mockfs were reported, and the prelink step completed afterwards.
+
+The garnet firmware build completed after adding the missing `UniXNULib` library assignment to the experimental board DSC, and rerunning with `ENABLE_SECUREBOOT=0`; the output firmware file is `SILICIUM_UEFI.fd` of 3,145,728 bytes.
+
+These artifacts are host-build outputs only. They do not prove device support, firmware safety, or a successful boot. The payload stage result and final boot image remain to be recorded.
+
 ## iPadOS 17 WSL research branch
 
 The native WSL checkout selects `ipados-17.7.11-21H461` and XNU `d8b80295118ef25ac3a784134bcf95cd8e88109f`. `unixnu fetch`, `unixnu status --json`, and `unixnu defconfig garnet_defconfig` succeeded. `python3 scripts/check-xnu-series.py ../UniXNU` reported 58 patches applied in a disposable clone. The example guard remains enabled in the working branch. These checks alone do not validate the inherited iPad product identity and ADT data, compilation, iOS ABI, or hardware boot.
