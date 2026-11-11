@@ -17,6 +17,10 @@ The target is `garnet`, Qualcomm SM7435-AB. A source statement is an upstream cl
 
 The [garnet HakiOS fork](https://github.com/JosephMontfort/hakios-xnu-kernel-garnet) uses `devices/manifest.conf` and `tools/hakios-device.py`, not `.gitmodules`, to compose device repositories. The garnet manifest points to `JosephMontfort/hakios-sm7435` at mutable `main`; resolve a commit before relying on it. Its device README claims working display, touch, SMP, OpenGL ES and UFS, partial audio and battery, and unfinished Metal, Wi-Fi and cellular. These are maintainer claims, not tests of this port.
 
+The project user states that JosephMontfort's HakiOS boots successfully on garnet. Treat that as user-reported reference evidence and prioritize the reference boot chain and hardware configuration. It is not an observation of this UniXNU build or proof that the same driver, firmware or OS ABI can be used unchanged.
+
+At the recorded `hakios-sm7435` revision, `uefi/files/Resources/Configs/garnet.toml` specifies an Android boot image header version of 4, a gzip-compressed kernel field with appended DTB, and UEFI FD base `0xa7100000` and size `0x300000`. `garnet-boot.sh` describes a separate resident-loader workflow that pushes a system ramdisk and boots HakiOS with its own arguments. Those facts explain the reference workflow, not compatibility with UniXNU's payload or proof that its image settings can be transferred unchanged. The reference's `pull-firmware.sh` also requests modem and other firmware; it has not been run and is outside the scope of the approved read-only model/CPU queries.
+
 The HakiOS common repository describes a mixture of APSL-2.0 and MIT licensing by directory; examine each file and its provenance. GitHub's lack of a detected license is not itself proof of a particular license. The separate `hakios-sm7435` repository has no root license identified in the investigation; treat its code and binaries as reference-only until rights are established.
 
 ## OS profile constraint
@@ -38,6 +42,8 @@ The HakiOS reference at commit `ff80ac362505fca36600f084fd066f3e47028f93` includ
 ## UEFI integration evidence
 
 [Project-Silicium PR 2166](https://github.com/Project-Silicium/Mu-Silicium/pull/2166) was merged as `7a2ada19841a129f86fb791c0b9a710436c849a4`; it changes garnet memory-map entries to address a reported Linux boot exception. This is not evidence of an XNU boot. The public [garnet fork](https://github.com/garnet-linux/Mu-Silicium/tree/f8779ea0bfb33e2aec31da4a902b4a4eb8abd044) has a later revision with a different memory map, so the precise revision matters.
+
+[JosephMontfort/Mu-Silicium](https://github.com/JosephMontfort/Mu-Silicium/tree/425ed9ad8c78f8cee48886be1f9ed1e74d4e0b55) is another public firmware reference. Its observed commit `425ed9ad8c78f8cee48886be1f9ed1e74d4e0b55` adds hardware reservation entries to garnet's memory-map source compared with the pinned garnet-linux reference. The differences need independent review against the intended boot chain and device; they have not been transferred to this port. The source review did not identify a DarwinBoot integration in that revision.
 
 At that fork revision, the garnet configuration describes a boot image using header version 1, whereas the Android community board configuration specifies version 4. These refer to different build paths; do not assume either is valid for our planned image without examining the selected boot chain and testing safely. The fork's garnet DSC/FDF was reported to lack UniXNU and DarwinBoot modules. Integration, source and licensing review, compilation, and on-device validation are still required. Do not redistribute vendor binaries merely because a public source tree references them.
 
