@@ -1,0 +1,177 @@
+diff --git a/package/UniXNUPkg/Library/UniXNULib/Config.c b/package/UniXNUPkg/Library/UniXNULib/Config.c
+index ed39c6b..dee66ab 100644
+--- a/package/UniXNUPkg/Library/UniXNULib/Config.c
++++ b/package/UniXNUPkg/Library/UniXNULib/Config.c
+@@ -10,6 +10,8 @@
+ #include "Internal.h"
+ 
+ #include <Library/FdtLib.h>
++#include <Guid/FileInfo.h>
++#include <Protocol/SimpleFileSystem.h>
+ 
+ //
+ // UniXNU targets AArch64 UEFI only.
+@@ -1493,6 +1495,50 @@ ApplyRoot (
+   }
+ }
+ 
++STATIC
++BOOLEAN
++DumpDirectory (
++  IN EFI_FILE_PROTOCOL  *Directory,
++  IN CONST CHAR8        *Prefix
++  )
++{
++  EFI_STATUS      Status;
++  UINTN           Size;
++  EFI_FILE_INFO   *Info;
++  UINT8           Buffer[1024];
++
++  for (;;) {
++    Size = sizeof (Buffer);
++    Status = Directory->Read (Directory, &Size, Buffer);
++    if (EFI_ERROR (Status) || Size == 0) {
++      break;
++    }
++
++    Info = (EFI_FILE_INFO *)Buffer;
++    UniXNULog ("config: %a %s", Prefix, Info->FileName);
++  }
++
++  return TRUE;
++}
++
++STATIC
++EFI_STATUS
++DebugOpenRoot (
++  IN EFI_HANDLE         Volume,
++  OUT EFI_FILE_PROTOCOL **Root
++  )
++{
++  EFI_STATUS                       Status;
++  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *Fs;
++
++  Status = gBS->HandleProtocol (Volume, &gEfiSimpleFileSystemProtocolGuid, (VOID **)&Fs);
++  if (EFI_ERROR (Status)) {
++    return Status;
++  }
++
++  return Fs->OpenVolume (Fs, Root);
++}
++
+ STATIC
+ BOOLEAN
+ TryVolume (
+@@ -1501,13 +1547,37 @@ TryVolume (
+   )
+ {
+   EFI_STATUS  Status;
++  EFI_FILE_PROTOCOL *FsRoot;
++  EFI_FILE_PROTOCOL *Directory;
+   CHAR8       *Text;
+   UINTN       Size;
+   TOML_NODE   *Root;
+   CHAR8       Error[96];
+ 
++  UniXNULog ("config: probing volume %p", Volume);
++  FsRoot = NULL;
++  Status = DebugOpenRoot (Volume, &FsRoot);
++  if (!EFI_ERROR (Status)) {
++    DumpDirectory (FsRoot, "root:");
++    Directory = NULL;
++    Status = FsRoot->Open (FsRoot, &Directory, L"\\EFI", EFI_FILE_MODE_READ, 0);
++    if (!EFI_ERROR (Status)) {
++      DumpDirectory (Directory, "EFI:");
++      Directory->Close (Directory);
++    }
++    FsRoot->Close (FsRoot);
++  }
+   Status = UniXNUReadFile (Volume, (CONST CHAR16 *)PcdGetPtr (PcdUniXNUConfigPath), (VOID **)&Text, &Size);
+   if (EFI_ERROR (Status)) {
++    UniXNULog ("config: canonical path unavailable (%r), trying FAT alias", Status);
++    // Some Qualcomm EDK2 FAT configurations expose the VFAT long-name
++    // entry only through its generated 8.3 alias.  Keep the canonical path
++    // first, then accept the alias produced for unixnu.toml by mtools.
++    UniXNULog ("config: canonical path unavailable (%r), trying FAT alias", Status);
++    Status = UniXNUReadFile (Volume, L"\\EFI\\UniXNU\\UNIXNU.TOM", (VOID **)&Text, &Size);
++  }
++  if (EFI_ERROR (Status)) {
++    UniXNULog ("config: FAT alias unavailable on %p (%r)", Volume, Status);
+     return FALSE;
+   }
+ 
+@@ -1555,6 +1625,8 @@ UniXNUConfigLoad (
+     Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &Count, &Handles);
+     if (!EFI_ERROR (Status)) {
+       for (Index = 0; Index < Count && !Loaded && Config->Error[0] == '\0'; Index++) {
++        Status = gBS->ConnectController (Handles[Index], NULL, NULL, TRUE);
++        UniXNULog ("config: connect volume %p -> %r", Handles[Index], Status);
+         Loaded = TryVolume (Config, Handles[Index]);
+       }
+ 
+diff --git a/scripts/unixnu/payload.py b/scripts/unixnu/payload.py
+index 4dcbfdc..a187b7a 100644
+--- a/scripts/unixnu/payload.py
++++ b/scripts/unixnu/payload.py
+@@ -162,7 +162,10 @@ def build(ctx, kernel=None):
+     shutil.rmtree(stage, ignore_errors=True)
+     payloads = stage / 'EFI/UniXNU/Payloads'
+     payloads.mkdir(parents=True)
+-    shutil.copyfile(kernel, payloads / 'kernel.macho')
++    # Keep the boot-critical files strictly 8.3-compatible.  The garnet
++    # firmware FAT driver currently does not resolve VFAT long names even
++    # when the long-name directory entries are present.
++    shutil.copyfile(kernel, payloads / 'KERNEL')
+     # The entry probe (stage bars, optional reset) is wanted with either setting; the panic screen is only one part of it.
+     if spec.get('panic_screen') or spec.get('entry_probe_reset_delay'):
+         probe = (['--reset-delay', str(int(spec['entry_probe_reset_delay']))]
+@@ -193,11 +196,11 @@ def build(ctx, kernel=None):
+     if ctx.schema_version == 2:
+         from .devicetree import compile_hardware, generate
+         dtb = compile_hardware(ctx)
+-        (payloads / 'kernel.macho.adt').write_bytes(generate(
++        (payloads / 'KERNEL.ADT').write_bytes(generate(
+             dtb, ctx.board, unique_chip_id=seed, data=bool(data), trust=bool(trust), addon=bool(addon),
+             root_policies=bool(policies)))
+     else:
+-        command = ['python3', ctx.tree / adt['tool'], '--output', payloads / 'kernel.macho.adt', '--dram-size', str(spec['dram_size'])]
++        command = ['python3', ctx.tree / adt['tool'], '--output', payloads / 'KERNEL.ADT', '--dram-size', str(spec['dram_size'])]
+         for key, flag in (('owned_memory_size', '--owned-memory-size'), ('root_match_volume_uuid', '--root-match-volume-uuid'),
+                           ('chip_id', '--chip-id'), ('cpu_regs', '--cpu-regs'), ('psci_method', '--psci-method')):
+             if adt.get(key) is not None:
+@@ -223,7 +226,7 @@ def build(ctx, kernel=None):
+     initrd = 'initrd = "Payloads/scratch-data.img"\n' if data else ''
+     loader = '' if spec.get('loader', 'firmware') == 'firmware' else '[[driver]]\npath = "Payloads/DarwinBoot.efi"\n'
+     config = (f'version = 1\n[boot]\ntimeout = {spec.get("timeout", 3)}\ndefault = "xnu"\n[kits]\nautoload = false\n{loader}'
+-              f'[[entry]]\nid = "xnu"\ntitle = "{spec.get("title", "UniXNU")}"\ntype = "xnu"\npath = "Payloads/kernel.macho"\n{initrd}'
++               f'[[entry]]\nid = "xnu"\ntitle = "{spec.get("title", "UniXNU")}"\ntype = "xnu"\npath = "Payloads/KERNEL"\n{initrd}'
+               f'args = "{line}"\n')
+     install = spec.get('install')
+     if install:
+@@ -236,13 +239,13 @@ def build(ctx, kernel=None):
+         # The second boot menu entry: the same kernel and seed behind a confirmation whose choices add a boot argument (for example the Data reset).
+         config += (f'[[entry]]\nid = "install"\ntitle = {json.dumps(install.get("title", "Install and boot"))}\n'
+                    f'confirm = {json.dumps(install["confirm"])}\nconfirm_titles = {json.dumps(titles)}\nconfirm_args = {json.dumps(extra)}\n'
+-                   f'type = "xnu"\npath = "Payloads/kernel.macho"\n{initrd}args = "{line}"\n')
++                   f'type = "xnu"\npath = "Payloads/KERNEL"\n{initrd}args = "{line}"\n')
+     # A loaded configuration replaces the built-in menu (UniXNULib Config.c) and with it that menu's Restart and Power off.
+     config += ('[[entry]]\nid = "reset"\ntitle = "Restart"\ntype = "action"\naction = "reset"\n'
+                '[[entry]]\nid = "shutdown"\ntitle = "Power off"\ntype = "action"\naction = "shutdown"\n')
+     if spec.get('tools'):
+         config += ('[[entry]]\nid = "tools"\ntitle = "Tools"\ntype = "action"\naction = "tools"\n')
+-    (stage / 'EFI/UniXNU/unixnu.toml').write_text(config)
++    (stage / 'EFI/UniXNU/UNIXNU.TOM').write_text(config)
+     for path in [stage, *stage.rglob('*')]:
+         os.utime(path, (EPOCH, EPOCH))
+     size = int(spec.get('size_mib', 192))
+@@ -250,8 +253,8 @@ def build(ctx, kernel=None):
+     if content > size * 1024 * 1024 * 0.95:
+         raise Error(f'the payload files take {content >> 20} MiB; raise size_mib (now {size}) in board.toml [payload]')
+     write_volume(stage, image, spec.get('volume', 'UNIXNU')[:11], size)
+-    data_report = {'kernel_sha256': sha256_file(kernel), 'payload_kernel_sha256': sha256_file(payloads / 'kernel.macho'),
+-                   'adt_sha256': sha256_file(payloads / 'kernel.macho.adt'), 'kernel_args': line,
++    data_report = {'kernel_sha256': sha256_file(kernel), 'payload_kernel_sha256': sha256_file(payloads / 'KERNEL'),
++                    'adt_sha256': sha256_file(payloads / 'KERNEL.ADT'), 'kernel_args': line,
+                    'trust_cache_sha256': sha256_file(trust) if trust else None, 'gpu_addon_sha256': sha256_file(addon) if addon else None,
+                    'data_ramdisk_sha256': sha256_file(data) if data else None, 'skip_setup': bool(getattr(args, 'skip_setup', False)), 'panic_screen': bool(spec.get('panic_screen')),
+                    'payload_sha256': sha256_file(image), 'payload_bytes': image.stat().st_size, 'hardware_tested': False}
