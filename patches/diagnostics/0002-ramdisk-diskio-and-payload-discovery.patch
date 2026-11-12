@@ -1,0 +1,427 @@
+diff --git a/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c b/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c
+index cd2a9e0..62be545 100644
+--- a/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c
++++ b/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c
+@@ -10,9 +10,17 @@
+ #include <Library/DebugLib.h>
+ #include <Library/FdtLib.h>
+ #include <Library/HobLib.h>
++#include <Library/MemoryAllocationLib.h>
+ #include <Library/UefiBootServicesTableLib.h>
+ #include <Protocol/BlockIo.h>
+ #include <Protocol/DevicePath.h>
++#include <Protocol/DiskIo.h>
++#include <Protocol/SimpleFileSystem.h>
++
++// Temporary garnet bring-up fallback. HakiOS places the system ramdisk here
++// when the bootloader does not provide linux,initrd-start/end in the FDT.
++#define UNIXNU_GARNET_FALLBACK_INITRD_BASE  0xA8000000ULL
++#define UNIXNU_GARNET_FALLBACK_INITRD_SIZE  0x0C000000ULL
+ 
+ // Mu-Silicium SEC stores the incoming x0 value in this HOB as a UINT64.
+ STATIC CONST EFI_GUID mEntryArgHobGuid = {
+@@ -128,6 +136,215 @@ STATIC EFI_BLOCK_IO_PROTOCOL  mBlockIo = {
+   RamBlockFlush
+ };
+ 
++//
++// The EDK II FAT driver does not bind to a Block I/O handle: FatDriverBindingSupported
++// opens EFI_DISK_IO_PROTOCOL (BY_DRIVER) and tests EFI_BLOCK_IO_PROTOCOL.  A handle that
++// publishes only Block I/O therefore never reaches SimpleFileSystem, which is why the
++// payload volume used to stay invisible to the configuration reader.  Publish a
++// byte-addressed Disk I/O view of the same read-only media.
++//
++STATIC
++EFI_STATUS
++EFIAPI
++RamDiskReadDisk (
++  IN  EFI_DISK_IO_PROTOCOL  *This,
++  IN  UINT32                MediaId,
++  IN  UINT64                Offset,
++  IN  UINTN                 BufferSize,
++  OUT VOID                  *Buffer
++  )
++{
++  UINT64  MediaSize;
++
++  if (MediaId != mMedia.MediaId) {
++    return EFI_MEDIA_CHANGED;
++  }
++
++  if (BufferSize == 0) {
++    return EFI_SUCCESS;
++  }
++
++  if (Buffer == NULL) {
++    return EFI_INVALID_PARAMETER;
++  }
++
++  MediaSize = MultU64x32 (mMedia.LastBlock + 1, mMedia.BlockSize);
++  if ((Offset > MediaSize) || ((UINT64)BufferSize > MediaSize - Offset)) {
++    return EFI_INVALID_PARAMETER;
++  }
++
++  CopyMem (Buffer, mRamBase + Offset, BufferSize);
++  return EFI_SUCCESS;
++}
++
++STATIC
++EFI_STATUS
++EFIAPI
++RamDiskWriteDisk (
++  IN EFI_DISK_IO_PROTOCOL  *This,
++  IN UINT32                MediaId,
++  IN UINT64                Offset,
++  IN UINTN                 BufferSize,
++  IN VOID                  *Buffer
++  )
++{
++  return EFI_WRITE_PROTECTED;
++}
++
++STATIC EFI_DISK_IO_PROTOCOL  mDiskIo = {
++  EFI_DISK_IO_PROTOCOL_REVISION,
++  RamDiskReadDisk,
++  RamDiskWriteDisk
++};
++
++//
++// garnet does not tell us the ramdisk address in a way we can trust: the boot
++// image has header version 4 (no load address), the appended device tree is
++// ours, so /chosen may still carry the values we packed instead of the address
++// Android actually used.  Identify the payload by its FAT boot sector instead
++// of trusting a property.  The volume label is the one the payload builder
++// wrote (board.toml [payload] volume, "UNIXNU" by default).
++//
++#define UNIXNU_PAYLOAD_LABEL  "UNIXNU"
++
++STATIC
++UINT64
++PayloadVolumeBytes (
++  IN CONST UINT8  *Sector
++  )
++{
++  UINT32  TotalSectors;
++
++  TotalSectors = ReadUnaligned16 ((CONST UINT16 *)(Sector + 19));
++  if (TotalSectors == 0) {
++    TotalSectors = ReadUnaligned32 ((CONST UINT32 *)(Sector + 32));
++  }
++
++  return MultU64x32 (TotalSectors, 512);
++}
++
++STATIC
++BOOLEAN
++PayloadVolumeAt (
++  IN  UINT64  Start,
++  OUT UINT64  *VolumeBytes OPTIONAL
++  )
++{
++  CONST UINT8  *Sector;
++  UINT16       Signature;
++  UINT16       BytesPerSector;
++  UINT8        SectorsPerCluster;
++  UINT16       ReservedSectors;
++  UINT8        FatCount;
++  UINT64       Bytes;
++
++  if ((Start == 0) || ((Start & (RAM_BLOCK_SIZE - 1)) != 0)) {
++    return FALSE;
++  }
++
++  Sector    = (CONST UINT8 *)(UINTN)Start;
++  Signature = (UINT16)((Sector[510] << 8) | Sector[511]);
++
++  //
++  // A FAT boot sector: 0x55AA, 512-byte sectors, a power-of-two cluster, a
++  // non-zero reserved area, one to four FATs and a non-zero sector total.
++  // The label then confirms it is the UniXNU payload and not another volume.
++  //
++  BytesPerSector    = ReadUnaligned16 ((CONST UINT16 *)(Sector + 11));
++  SectorsPerCluster = Sector[13];
++  ReservedSectors   = ReadUnaligned16 ((CONST UINT16 *)(Sector + 14));
++  FatCount          = Sector[16];
++  Bytes             = PayloadVolumeBytes (Sector);
++
++  if ((Signature != 0xAA55) || (BytesPerSector != RAM_BLOCK_SIZE) ||
++      (SectorsPerCluster == 0) || ((SectorsPerCluster & (SectorsPerCluster - 1)) != 0) ||
++      (ReservedSectors == 0) || (FatCount == 0) || (FatCount > 4) || (Bytes == 0))
++  {
++    return FALSE;
++  }
++
++  if (AsciiStrnCmp ((CONST CHAR8 *)(Sector + 71), UNIXNU_PAYLOAD_LABEL, sizeof (UNIXNU_PAYLOAD_LABEL) - 1) != 0) {
++    return FALSE;
++  }
++
++  if (VolumeBytes != NULL) {
++    *VolumeBytes = Bytes;
++  }
++
++  return TRUE;
++}
++
++STATIC
++BOOLEAN
++FindPayloadVolume (
++  OUT UINT64  *Start,
++  OUT UINT64  *VolumeBytes
++  )
++{
++  EFI_STATUS             Status;
++  UINTN                  MapSize;
++  UINTN                  MapKey;
++  UINTN                  DescriptorSize;
++  UINT32                 DescriptorVersion;
++  EFI_MEMORY_DESCRIPTOR  *Map;
++  UINTN                  Count;
++  UINTN                  Index;
++  UINT64                 Address;
++
++  MapSize = 0;
++  Status  = gBS->GetMemoryMap (&MapSize, NULL, &MapKey, &DescriptorSize, &DescriptorVersion);
++  if (Status != EFI_BUFFER_TOO_SMALL) {
++    DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: memory map size %r\n", Status));
++    return FALSE;
++  }
++
++  MapSize += 4 * DescriptorSize;
++  Map      = AllocatePool (MapSize);
++  if (Map == NULL) {
++    return FALSE;
++  }
++
++  Status = gBS->GetMemoryMap (&MapSize, Map, &MapKey, &DescriptorSize, &DescriptorVersion);
++  if (EFI_ERROR (Status)) {
++    FreePool (Map);
++    return FALSE;
++  }
++
++  Count = MapSize / DescriptorSize;
++  for (Index = 0; Index < Count; Index++) {
++    EFI_MEMORY_DESCRIPTOR  *Descriptor;
++
++    Descriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)Map + Index * DescriptorSize);
++
++    //
++    // Only ordinary DRAM is scanned.  The ramdisk buffer ABL fills is free
++    // memory, so it shows up as conventional, boot-services or loader data;
++    // MMIO, reserved firmware windows, unusable and PAL regions are skipped
++    // because reading them is not safe.
++    //
++    if ((Descriptor->Type != EfiConventionalMemory) &&
++        (Descriptor->Type != EfiBootServicesData) &&
++        (Descriptor->Type != EfiLoaderData))
++    {
++      continue;
++    }
++
++    for (Address = Descriptor->PhysicalStart;
++         Address + RAM_BLOCK_SIZE <= Descriptor->PhysicalStart + MultU64x32 (Descriptor->NumberOfPages, EFI_PAGE_SIZE);
++         Address += RAM_BLOCK_SIZE)
++    {
++      if (PayloadVolumeAt (Address, VolumeBytes)) {
++        *Start = Address;
++        FreePool (Map);
++        return TRUE;
++      }
++    }
++  }
++
++  FreePool (Map);
++  return FALSE;
++}
++
+ STATIC
+ VOID
+ PublishInitrd (
+@@ -142,12 +359,18 @@ PublishInitrd (
+   INT32       EndLength;
+   UINT64      Start;
+   UINT64      End;
++  UINT64      ChosenStart;
++  UINT64      ChosenEnd;
++  UINT64      VolumeBytes = 0;
++  BOOLEAN     Found       = FALSE;
+   EFI_HANDLE  Handle;
+ 
+   Chosen = FdtPathOffset (Fdt, "/chosen");
+   if (Chosen < 0) {
+     DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: no /chosen\n"));
+-    return;
++    Start = UNIXNU_GARNET_FALLBACK_INITRD_BASE;
++    End   = Start + UNIXNU_GARNET_FALLBACK_INITRD_SIZE;
++    goto HaveInitrdRange;
+   }
+ 
+   StartProp = FdtGetProp (Fdt, Chosen, "linux,initrd-start", &StartLength);
+@@ -156,50 +379,113 @@ PublishInitrd (
+       ((StartLength != 4) && (StartLength != 8)) || ((EndLength != 4) && (EndLength != 8)))
+   {
+     DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: no initrd in /chosen\n"));
+-    return;
++    Start = UNIXNU_GARNET_FALLBACK_INITRD_BASE;
++    End   = Start + UNIXNU_GARNET_FALLBACK_INITRD_SIZE;
++    goto HaveInitrdRange;
+   }
+ 
+   Start = ReadCells (StartProp, StartLength / 4);
+   End   = ReadCells (EndProp, EndLength / 4);
+-  if (End <= Start) {
+-    DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: empty initrd 0x%lx-0x%lx\n", Start, End));
+-    return;
++
++HaveInitrdRange:
++  ChosenStart = Start;
++  ChosenEnd   = End;
++  DEBUG ((
++    DEBUG_ERROR,
++    "UNIXNURAMDISK: /chosen initrd 0x%lx-0x%lx (0x%lx bytes)\n",
++    Start,
++    End,
++    End > Start ? End - Start : 0
++    ));
++
++  if ((End > Start) && PayloadVolumeAt (Start, &VolumeBytes)) {
++    Found = TRUE;
++  } else {
++    CONST UINT8  *Sector;
++    CHAR8        Label[12];
++
++    Sector = (CONST UINT8 *)(UINTN)Start;
++    ZeroMem (Label, sizeof (Label));
++    if (Start != 0) {
++      CopyMem (Label, Sector + 71, sizeof (Label) - 1);
++      DEBUG ((
++        DEBUG_ERROR,
++        "UNIXNURAMDISK: /chosen is not the payload (sig 0x%04x bps %u spc %u label '%a')\n",
++        (UINT16)((Sector[510] << 8) | Sector[511]),
++        ReadUnaligned16 ((CONST UINT16 *)(Sector + 11)),
++        Sector[13],
++        Label
++        ));
++    } else {
++      DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: /chosen is not the payload (no range)\n"));
++    }
++
++    DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: scanning RAM for the payload FAT volume\n"));
++    Found = FindPayloadVolume (&Start, &VolumeBytes);
++  }
++
++  Handle = NULL;
++  Status = EFI_NOT_FOUND;
++  if (Found && (VolumeBytes >= RAM_BLOCK_SIZE)) {
++    //
++    // Publish exactly the FAT volume, not a rounded guess: the media size is
++    // what the FAT driver will read.
++    //
++    End = Start + (VolumeBytes & ~(UINT64)(RAM_BLOCK_SIZE - 1));
++
++    mRamBase                = (UINT8 *)(UINTN)Start;
++    mMedia.MediaId          = 1;
++    mMedia.RemovableMedia   = FALSE;
++    mMedia.MediaPresent     = TRUE;
++    mMedia.LogicalPartition = FALSE;
++    mMedia.ReadOnly         = TRUE;
++    mMedia.WriteCaching     = FALSE;
++    mMedia.BlockSize        = RAM_BLOCK_SIZE;
++    mMedia.IoAlign          = 1;
++    mMedia.LastBlock        = (End - Start) / RAM_BLOCK_SIZE - 1;
++
++    Status = gBS->InstallMultipleProtocolInterfaces (
++                    &Handle,
++                    &gEfiDevicePathProtocolGuid,
++                    &mDevicePath,
++                    &gEfiBlockIoProtocolGuid,
++                    &mBlockIo,
++                    &gEfiDiskIoProtocolGuid,
++                    &mDiskIo,
++                    NULL
++                    );
++    DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: ramdisk block device 0x%lx size 0x%lx %r\n", Start, End - Start, Status));
++    if (!EFI_ERROR (Status)) {
++      EFI_STATUS  ConnectStatus;
++      VOID        *FileSystem;
++
++      // The ramdisk is a newly-created controller.  On garnet the FAT driver
++      // is already dispatched, but it does not bind to this child handle until
++      // it is explicitly connected.
++      ConnectStatus = gBS->ConnectController (Handle, NULL, NULL, TRUE);
++      DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: connect block device %r\n", ConnectStatus));
++
++      FileSystem    = NULL;
++      ConnectStatus = gBS->HandleProtocol (Handle, &gEfiSimpleFileSystemProtocolGuid, &FileSystem);
++      DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: simple file system %r\n", ConnectStatus));
++    }
+   }
+ 
+   //
+-  // The bootloader does not always end the initrd on a sector boundary: the
+-  // nubia NX769J hands over an end address whose low bits are 0x430. Round the
+-  // published length up instead of refusing the ramdisk; the bytes between the
+-  // real end and the rounded end are inside the RAM the bootloader reserved for
+-  // the initrd, and the volume is read-only.
++  // Bring-up diagnostics: hold the console long enough to photograph this
++  // block.  Remove the stall once config discovery is proven on garnet.
+   //
+-  if (((End - Start) % RAM_BLOCK_SIZE) != 0) {
+-    UINT64  Rounded = ((End - Start) + RAM_BLOCK_SIZE - 1) / RAM_BLOCK_SIZE * RAM_BLOCK_SIZE;
+-    DEBUG ((DEBUG_WARN, "UNIXNURAMDISK: initrd 0x%lx-0x%lx rounded to 0x%lx bytes\n", Start, End, Rounded));
+-    End = Start + Rounded;
+-  }
+-
+-  mRamBase                = (UINT8 *)(UINTN)Start;
+-  mMedia.MediaId          = 1;
+-  mMedia.RemovableMedia   = FALSE;
+-  mMedia.MediaPresent     = TRUE;
+-  mMedia.LogicalPartition = FALSE;
+-  mMedia.ReadOnly         = TRUE;
+-  mMedia.WriteCaching     = FALSE;
+-  mMedia.BlockSize        = RAM_BLOCK_SIZE;
+-  mMedia.IoAlign          = 1;
+-  mMedia.LastBlock        = (End - Start) / RAM_BLOCK_SIZE - 1;
++  DEBUG ((DEBUG_ERROR, "\n=== UNIXNU RAMDISK SUMMARY ===\n"));
++  DEBUG ((DEBUG_ERROR, "chosen  : 0x%lx-0x%lx\n", ChosenStart, ChosenEnd));
++  if (Found) {
++    DEBUG ((DEBUG_ERROR, "payload : 0x%lx, FAT says 0x%lx bytes\n", Start, VolumeBytes));
++  } else {
++    DEBUG ((DEBUG_ERROR, "payload : not found in memory\n"));
++  }
+ 
+-  Handle = NULL;
+-  Status = gBS->InstallMultipleProtocolInterfaces (
+-                  &Handle,
+-                  &gEfiDevicePathProtocolGuid,
+-                  &mDevicePath,
+-                  &gEfiBlockIoProtocolGuid,
+-                  &mBlockIo,
+-                  NULL
+-                  );
+-  DEBUG ((DEBUG_ERROR, "UNIXNURAMDISK: initrd block device 0x%lx size 0x%lx %r\n", Start, End - Start, Status));
++  DEBUG ((DEBUG_ERROR, "publish : %r\n", Status));
++  DEBUG ((DEBUG_ERROR, "=== holding 30 s ===\n"));
++  gBS->Stall (30 * 1000 * 1000);
+ }
+ 
+ EFI_STATUS
+diff --git a/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf b/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
+index f4dab2d..42b6730 100644
+--- a/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
++++ b/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.inf
+@@ -18,12 +18,15 @@
+   DebugLib
+   FdtLib
+   HobLib
++  MemoryAllocationLib
+   UefiBootServicesTableLib
+   UefiDriverEntryPoint
+ 
+ [Protocols]
+   gEfiBlockIoProtocolGuid                       ## PRODUCES
+   gEfiDevicePathProtocolGuid                    ## PRODUCES
++  gEfiDiskIoProtocolGuid                        ## PRODUCES
++  gEfiSimpleFileSystemProtocolGuid              ## CONSUMES
+ 
+ [Depex]
+   TRUE

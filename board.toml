@@ -31,7 +31,7 @@ include_dirs = ["soc:dts"]
 config = "garnet"
 dsc = "Platforms/Xiaomi/garnetPkg/garnet.dsc"
 fd = "Build/garnetPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
-defines = { ENABLE_SECUREBOOT = "0" }
+defines = { ENABLE_SECUREBOOT = "0", UNIXNU_GARNET_FALLBACK_INITRD_BASE = "0xA8000000", UNIXNU_GARNET_FALLBACK_INITRD_SIZE = "0x0C000000" }
 submodules = ["Binaries", "Common/Mu", "Common/Mu_OEM_Sample", "Silicium-ACPI", "Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl"]
 packages = ["{uefi}", "{uefi}/Platforms/Xiaomi", "{tree}/package", "{tree}/drivers/DarwinBoot", "{edk2}", "{uefi}/Common/Mu", "{uefi}/Common/Mu_OEM_Sample", "{uefi}/Silicon/Qualcomm", "{uefi}/Silicon/Silicium", "{uefi}/Silicium-ACPI", "{uefi}/Silicium-ACPI/Platforms/Xiaomi", "{uefi}/Silicium-ACPI/Silicon/Qualcomm"]
 
@@ -47,9 +47,23 @@ tools = true
 [bootimg]
 dtb = "build/garnet/hakios-garnet.dtb"
 
-[[bootimg.dtb_node]]
-path = "/chosen"
-props = [
-  { name = "linux,initrd-start", type = "x", value = ["0x0", "0xA8000000"] },
-  { name = "linux,initrd-end", type = "x", value = ["0x0", "0xB4000000"] },
-]
+# Android boot image header v0 with explicit load addresses.
+#
+# Header v4 carries no load addresses, and the bootloader then either did not
+# load the 192 MiB payload or placed it where the firmware could not find it.
+# v0 puts kernel_addr, ramdisk_addr and tags_addr in the header.  The test on
+# 2026-11-12 still did not find a FAT volume, and the bootloader reported an
+# initrd at 0xABFFF000-0xB7FFF000: it end-aligned the ramdisk to the top of
+# the 0xA8000000 "Kernel" window instead of honouring ramdisk_addr.  Keep the
+# header convention for further delivery experiments; it is not a fix.
+#
+#   0x80000000  garnet DRAM base (garnet.dsc PcdSystemMemoryBase)
+#   0x28000000  ramdisk_offset -> 0xA8000000
+#   0x1E00000   tags_offset    -> 0x81E00000
+[bootimg.image]
+header_version  = 0
+base            = 0x80000000
+kernel_offset   = 0x8000
+ramdisk_offset  = 0x28000000
+tags_offset     = 0x1E00000
+pagesize        = 4096

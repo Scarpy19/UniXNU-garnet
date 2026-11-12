@@ -8,7 +8,7 @@ The end goal is an evidence-backed boot on the user's garnet device, not merely 
 4. **Hardware safety:** Before any device operation, explain the exact command, image provenance, recovery path and risks and obtain user approval. Never flash partitions without separate authorization. Confirm transport and log capture first.
 5. **Hardware milestones:** Record UEFI output, loader handoff, XNU entry, SMP, storage, display, input, GPU, audio and battery separately. Distinguish device observations from upstream claims. Test on the relevant RAM variants before claiming both work.
 
-Experimental kernel, UEFI, and payload host builds are recorded below. No boot image, device boot, or peripheral success has been verified.
+Experimental kernel, UEFI, and payload host builds are recorded below. Later sections also record device runs that reached the UniXNU menu through `fastboot boot`; XNU entry and peripherals remain unverified.
 
 ## Initial scaffold checks
 
@@ -196,3 +196,50 @@ the display/menu checkpoint is confirmed again, while XNU entry and runtime
 logs remain unconfirmed. Complete local logs are under
 `logs/device-test/repeat-menu/` and are not committed because they contain
 device identifiers.
+
+## Initrd delivery experiment, header v0 (2026-11-12)
+
+A UniXNU device record for marble reports that Android boot header version 4 did
+not load its ramdisk reliably and that its working path is a v0 image. That is a
+source claim from a different board; it motivated the experiment below and does
+not establish garnet behaviour.
+
+The firmware was rebuilt from the pinned UniXNU checkout with local diagnostic
+changes, captured in `patches/diagnostics/0001` to `0003`: `UniXNURamDiskDxe`
+publishes Disk I/O, validates the labelled FAT boot sector, scans RAM, connects
+the controller and holds the console for 30 seconds; `UniXNULib` mirrors its log
+to `ConOut` and raises the debug level; the payload writer emits `UNIXNU.TOM`,
+`KERNEL` and `KERNEL.ADT` as 8.3 names. The output volume is 3,145,728 bytes,
+SHA-256 `92f85c8bd073953f731956c1327f0230374868081af1eaa9483f92aeb76b8114`.
+The payload volume is 201,326,592 bytes, SHA-256
+`90925bde34cec351bc315a4b85743ccf5cf6a8006ab4682673a7b9257ee65476`.
+
+The boot image was repacked with `[bootimg.image]` header v0 and explicit
+addresses: `base 0x80000000`, `kernel_offset 0x8000`, `ramdisk_offset
+0x28000000`, `tags_offset 0x1E00000`, `pagesize 4096`. `boot.json` records
+`header_version 0`, `kernel_address 0x80008000`, `tags_address 0x81e00000`,
+`ramdisk_bytes 201326592`, `fd_sha256 92f85c8b...`, `dtb_sha256 66094d6e...`,
+`image_bytes 203194368` and `image_sha256
+d6e5d7f039cc42cc3ad4e11522de54e230cbc25334c85069830f5a92929cf9e0`. Re-reading
+the packed header confirmed kernel `0x80008000`, ramdisk `0xA8000000`, tags
+`0x81E00000`, page size 4096 and header version 0.
+
+The image was booted with the user's standing authorization for `fastboot boot`
+only; no partition was written, erased or formatted. Fastboot reported
+`Sending 'boot.img' (198432 KB) OKAY` and `Booting OKAY`, and the phone did not
+fall back to fastboot within 45 seconds. The user read the on-screen summary:
+
+```text
+=== UNIXNU RAMDISK SUMMARY ===
+chosen  : 0xABFFF000-0xB7FFF000
+payload : not found in memory
+publish : not found
+```
+
+The bootloader therefore end-aligned a 192 MiB initrd to `0xB8000000`, the top
+of the reserved "Kernel" window from `MemoryMapLib`, instead of using the
+requested `0xA8000000`. The driver found no FAT boot sector at the advertised
+start and no labelled volume elsewhere in conventional, boot-services or
+loader-data RAM. This run verifies firmware dispatch, the DTB handoff and the
+`/chosen` range. It does not verify that the bootloader copied the payload
+bytes, and it does not reach DarwinBoot or XNU.

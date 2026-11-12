@@ -1,17 +1,18 @@
 diff --git a/package/UniXNUPkg/Library/UniXNULib/Config.c b/package/UniXNUPkg/Library/UniXNULib/Config.c
-index ed39c6b..dee66ab 100644
+index ed39c6b..971e704 100644
 --- a/package/UniXNUPkg/Library/UniXNULib/Config.c
 +++ b/package/UniXNUPkg/Library/UniXNULib/Config.c
-@@ -10,6 +10,8 @@
+@@ -10,6 +10,9 @@
  #include "Internal.h"
  
  #include <Library/FdtLib.h>
 +#include <Guid/FileInfo.h>
++#include <Protocol/BlockIo.h>
 +#include <Protocol/SimpleFileSystem.h>
  
  //
  // UniXNU targets AArch64 UEFI only.
-@@ -1493,6 +1495,50 @@ ApplyRoot (
+@@ -1493,6 +1496,50 @@ ApplyRoot (
    }
  }
  
@@ -62,7 +63,7 @@ index ed39c6b..dee66ab 100644
  STATIC
  BOOLEAN
  TryVolume (
-@@ -1501,13 +1547,37 @@ TryVolume (
+@@ -1501,13 +1548,37 @@ TryVolume (
    )
  {
    EFI_STATUS  Status;
@@ -100,7 +101,30 @@ index ed39c6b..dee66ab 100644
      return FALSE;
    }
  
-@@ -1555,6 +1625,8 @@ UniXNUConfigLoad (
+@@ -1552,9 +1623,31 @@ UniXNUConfigLoad (
+   }
+ 
+   if (!Loaded && (Config->Error[0] == '\0')) {
++    //
++    // A controller that publishes Block I/O but was created after the boot
++    // manager connected its drivers (the initrd ramdisk, for example) only
++    // reaches SimpleFileSystem once the FAT driver is connected to it.  Do
++    // that here so a payload volume is visible even when the firmware never
++    // revisited the handle.
++    //
++    EFI_HANDLE  *Blocks;
++    UINTN       BlockCount;
++
++    Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &BlockCount, &Blocks);
++    if (!EFI_ERROR (Status)) {
++      for (Index = 0; Index < BlockCount; Index++) {
++        Status = gBS->ConnectController (Blocks[Index], NULL, NULL, TRUE);
++        UniXNULog ("config: connect block device %p -> %r", Blocks[Index], Status);
++      }
++
++      FreePool (Blocks);
++    }
++
      Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleFileSystemProtocolGuid, NULL, &Count, &Handles);
      if (!EFI_ERROR (Status)) {
        for (Index = 0; Index < Count && !Loaded && Config->Error[0] == '\0'; Index++) {

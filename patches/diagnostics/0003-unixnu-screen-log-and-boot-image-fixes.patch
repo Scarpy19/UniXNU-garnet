@@ -1,0 +1,49 @@
+diff --git a/package/UniXNUPkg/Library/UniXNULib/Main.c b/package/UniXNUPkg/Library/UniXNULib/Main.c
+index c54a57a..fc8f3aa 100644
+--- a/package/UniXNUPkg/Library/UniXNULib/Main.c
++++ b/package/UniXNUPkg/Library/UniXNULib/Main.c
+@@ -44,6 +44,15 @@ UniXNULog (
+     Size = AsciiStrLen (Line);
+     mSerial->Write (mSerial, &Size, Line);
+   }
++
++  // Temporary garnet bring-up mirror.  The device has no exposed UART or
++  // USB debug transport, so make UniXNU's log visible before the UI starts.
++  if (gST->ConOut != NULL) {
++    CHAR16  WideLine[256];
++    if (!EFI_ERROR (AsciiStrToUnicodeStrS (Line, WideLine, ARRAY_SIZE (WideLine)))) {
++      gST->ConOut->OutputString (gST->ConOut, WideLine);
++    }
++  }
+ }
+ 
+ EFI_STATUS
+diff --git a/package/UniXNUPkg/UniXNUPkg.dec b/package/UniXNUPkg/UniXNUPkg.dec
+index bdf8d38..cb439da 100644
+--- a/package/UniXNUPkg/UniXNUPkg.dec
++++ b/package/UniXNUPkg/UniXNUPkg.dec
+@@ -39,7 +39,8 @@
+ [PcdsFixedAtBuild]
+   ## DEBUG() level used for UniXNU's own log lines. Platforms whose debug
+   #  output shares the screen with the menu can lower it to DEBUG_VERBOSE.
+-  gUniXNUPkgTokenSpaceGuid.PcdUniXNUDebugLevel|0x00000040|UINT32|0x00000001
++  # Diagnostic build: expose all UniXNU DEBUG masks while bringing up garnet.
++  gUniXNUPkgTokenSpaceGuid.PcdUniXNUDebugLevel|0xffffffff|UINT32|0x00000001
+ 
+   ## Path of the configuration file on every scanned volume.
+   gUniXNUPkgTokenSpaceGuid.PcdUniXNUConfigPath|L"\\EFI\\UniXNU\\unixnu.toml"|VOID*|0x00000002
+diff --git a/scripts/unixnu/bootimg.py b/scripts/unixnu/bootimg.py
+index de568f8..2789ef9 100644
+--- a/scripts/unixnu/bootimg.py
++++ b/scripts/unixnu/bootimg.py
+@@ -48,7 +48,9 @@ def patch_dtb(dtb, nodes, scratch):
+     work = scratch / 'device.dtb'
+     work.write_bytes(dtb)
+     for node in nodes:
+-        run([fdtput, '-c', work, node['path']], capture=True)
++        # A firmware DTB normally already contains /chosen.  fdtput -c
++        # returns FDT_ERR_EXISTS for such nodes, even though its property
++        # writes are valid.  Only the properties need to be updated here.
+         for prop in node.get('props', []):
+             values = prop['value'] if isinstance(prop['value'], list) else [prop['value']]
+             run([fdtput, '-t', prop.get('type', 's'), work, node['path'], prop['name'], *[str(v) for v in values]], capture=True)
